@@ -1,0 +1,5 @@
+"your choice":"""print("Tu te crois malin ? hmm... Tu me fais presque de la peine.");time.sleep(2)""",
+0:"""print("Te crois-tu capable de faire bugger ce menu ? HA n'essaye même pas !");time.sleep(2)""",
+123:"""print("Soleil !");time.sleep(2)""",
+666:"""print("SATAN! Je t'ai fais quoi pour que tu me fasse ça !?".upper());time.sleep(2)""",
+999:"""print("Me dit pas que t'as fait toutes les combinaisons pour arriver jusqu'ici !?");time.sleep(2)"""

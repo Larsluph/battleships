@@ -1,0 +1,15 @@
+TODO :
+  main_menu tk
+  add saves
+  add powerups
+  IA normal
+
+IN_PROGRESS :
+
+TOFIX :
+  
+DONE :
+  start with random turn
+  changes to readme.txt for TL;DR
+  IA easy/hardcore
+  game time stat

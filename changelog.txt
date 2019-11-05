@@ -1,0 +1,11 @@
+v0.1:
+  - placement des bateaux (sans check superpos)
+
+v0.2:
+  - bugs de placements réglés
+
+v0.3:
+  - Prépa à la v1
+-------
+v1.0:
+  - sortie du jeu
