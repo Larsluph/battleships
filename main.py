@@ -11,10 +11,27 @@ import tkinter as tk
 import win_manager
 
 class Board:
-    def __init__(self,size,scale):
+    def __init__(self,size,scale,dark_mode=True):
         self.size = size
         self.scale = scale
         self.status_var = tk.StringVar(value='{dmg_status}')
+        self.dark_mode = dark_mode
+        if dark_mode:
+            self.color = {
+                "board": "#4d4d4d",
+                "boat" : "#663300",
+                "line" : "#000000",
+                "hit"  : "#b30000",
+                "miss" : "#1f62cf"
+            }
+        else:
+            self.color = {
+                "board": "#61c5ff",
+                "boat" : "#808080",
+                "line" : "#000000",
+                "hit"  : "#ff0000",
+                "miss" : "#0c00ed"
+            }
 
     def generate(self,window,player):
         if player == 1:
@@ -23,20 +40,20 @@ class Board:
             self.txt = "Enemy's Playboard"
 
         self.txt = tk.Label(window, text=self.txt)
-        self.board = tk.Canvas(window, height=(self.size[0]+1)*self.scale[1], width=(self.size[1]+1)*self.scale[0], bg='#61c5ff')
+        self.board = tk.Canvas(window, height=(self.size[0]+1)*self.scale[1], width=(self.size[1]+1)*self.scale[0], bg=self.color["board"])
     
     def draw_grid(self):
-        self.board.create_line(self.scale[0], 3, (self.size[0]+1)*self.scale[0], 3, width=3, fill='black')
-        self.board.create_line(3, self.scale[1], 3, (self.size[1]+1)*self.scale[1], width=3, fill='black')
+        self.board.create_line(self.scale[0], 3, (self.size[0]+1)*self.scale[0], 3, width=3, fill=self.color["line"])
+        self.board.create_line(3, self.scale[1], 3, (self.size[1]+1)*self.scale[1], width=3, fill=self.color["line"])
 
         i=self.scale[0]
         while i <= (self.size[0]+1)*self.scale[0]:
-            self.board.create_line(0,i,(self.size[0]+1)*self.scale[0],i,width=3,fill='black') # draw x lines
+            self.board.create_line(0,i,(self.size[0]+1)*self.scale[0],i,width=3,fill=self.color["line"]) # draw x lines
             i+=self.scale[0]
 
         i=self.scale[1]
         while i <= (self.size[1]+1)*self.scale[1]:
-            self.board.create_line(i,0,i,(self.size[1]+1)*self.scale[1],width=3,fill='black') # draw y lines
+            self.board.create_line(i,0,i,(self.size[1]+1)*self.scale[1],width=3,fill=self.color["line"]) # draw y lines
             i+=self.scale[1]
 
         bold_font = ("Helvetica", 18, "bold")
@@ -47,23 +64,22 @@ class Board:
             self.board.create_text( ( self.scale[0]/2, (self.scale[1]*y)+(self.scale[1]*1.5) ) , text=letter[y] ,font=bold_font)
 
     def draw_boat(self,boat):
-        boat_color = "#808080"
         if boat.base_coordinates[2] == 0:
             self.board.create_oval(
                 boat.base_coordinates[0]*self.scale[0], boat.base_coordinates[1]*self.scale[1],
                 (boat.base_coordinates[0]*self.scale[0])+(boat.capacity*self.scale[0]), (boat.base_coordinates[1]*self.scale[1])+self.scale[1],
-                outline=boat_color,fill=boat_color,width=1)
+                outline=self.color["boat"],fill=self.color["boat"],width=1)
         else:
             self.board.create_oval(
                 boat.base_coordinates[0]*self.scale[0], boat.base_coordinates[1]*self.scale[1],
                 (boat.base_coordinates[0]*self.scale[0])+self.scale[0], (boat.base_coordinates[1]*self.scale[1])+(boat.capacity*self.scale[1]),
-                outline=boat_color,fill=boat_color,width=1)
+                outline=self.color["boat"],fill=self.color["boat"],width=1)
     
     def draw_hit(self,coordinates):
         self.board.create_line(
             coordinates[0]*self.scale[0],(coordinates[1]+1)*self.scale[1],
             (coordinates[0]+1)*self.scale[0],coordinates[1]*self.scale[1],
-            width=3,fill='#ff0000')
+            width=3,fill=self.color["hit"])
     
     def draw_drown(self,boat):
         if not(boat.base_coordinates[2]):
@@ -71,31 +87,31 @@ class Board:
                 self.board.create_line(
                     (boat.base_coordinates[0]+x)*self.scale[0], (boat.base_coordinates[1])*self.scale[1],
                     (boat.base_coordinates[0]+x+1)*self.scale[0], (boat.base_coordinates[1]+1)*self.scale[1],
-                    width=3,fill='#ff0000')
+                    width=3,fill=self.color["hit"])
                 self.board.create_line(
                     (boat.base_coordinates[0]+x)*self.scale[0], (boat.base_coordinates[1]+1)*self.scale[1],
                     (boat.base_coordinates[0]+x+1)*self.scale[0], (boat.base_coordinates[1])*self.scale[1],
-                    width=3,fill='#ff0000')
+                    width=3,fill=self.color["hit"])
         else:
             for x in range(boat.capacity):
                 self.board.create_line(
                     (boat.base_coordinates[0])*self.scale[0], (boat.base_coordinates[1]+x)*self.scale[1],
                     (boat.base_coordinates[0]+1)*self.scale[0], (boat.base_coordinates[1]+x+1)*self.scale[1],
-                    width=3,fill='#ff0000')
+                    width=3,fill=self.color["hit"])
                 self.board.create_line(
                     (boat.base_coordinates[0]+1)*self.scale[0], (boat.base_coordinates[1]+x)*self.scale[1],
                     (boat.base_coordinates[0])*self.scale[0], (boat.base_coordinates[1]+x+1)*self.scale[1],
-                    width=3,fill='#ff0000')
+                    width=3,fill=self.color["hit"])
     
     def draw_miss(self,coordinates):
         self.board.create_line(
             (coordinates[0]+1)*self.scale[0],(coordinates[1]+1)*self.scale[1],
             coordinates[0]*self.scale[0],coordinates[1]*self.scale[1],
-            width=3,fill='#0c00ed')
+            width=3,fill=self.color["miss"])
         self.board.create_line(
             (coordinates[0])*self.scale[0],(coordinates[1]+1)*self.scale[1],
             (coordinates[0]+1)*self.scale[0],coordinates[1]*self.scale[1],
-            width=3,fill='#0c00ed')
+            width=3,fill=self.color["miss"])
     
 class Boat:
     def __init__(self,properties):
@@ -421,9 +437,10 @@ letter = list(string.ascii_uppercase)
 with open("battleships.config",mode="r") as f:
     lines = f.readlines()
 
-shift = 5
-boatnbr_line = 17
-caps_line = 18
+shift = 6
+boatnbr_line = 19
+caps_line = 20
+dark = 21
 """removed feature
 try:
     size = eval(lines[size_line][:len(lines[size_line])-1])
@@ -441,7 +458,7 @@ try:
     if boatnbr == None:
         boatnbr = int(lines[boatnbr_line-shift][:len(lines[boatnbr_line-shift])-1])
 except:
-    print("Configuration file error line 21. Please make sure you only changed the custom values.")
+    print("Configuration file error line 20. Please make sure you only changed the custom values.")
     os.system("pause")
     raise SystemExit
 
@@ -452,23 +469,32 @@ try:
 
     for x in caps:
         if x > size[0] or x > size[1]:
-            print("Configuration file error line 22. Some boats are larger than the grid.")
+            print("Configuration file error line 21. Some boats are larger than the grid.")
             os.system("pause")
             raise SystemExit
         elif x < 1:
-            print("Configuration file error line 22. A boat's capacity have to be higher than 1.")
+            print("Configuration file error line 21. A boat's capacity have to be higher than 1.")
             os.system("pause")
             raise SystemExit
 
 except:
-    print("Configuration file error line 22. Please make sure you only changed the custom values.")
+    print("Configuration file error line 21. Please make sure you only changed the custom values.")
     os.system("pause")
     raise SystemExit
 
 if len(caps) >= boatnbr:
     caps = caps[:boatnbr]
 else:
-    print("Configuration file error line 22. The number of boats isn't corresponding to the list's length")
+    print("Configuration file error line 21. The number of boats isn't corresponding to the list's length")
+    os.system("pause")
+    raise SystemExit
+
+try:
+    dark_mode = eval(lines[boatnbr_line][:len(lines[boatnbr_line])-1])
+    if dark_mode == None:
+        dark_mode = int(lines[boatnbr_line-shift][:len(lines[boatnbr_line-shift])-1])
+except:
+    print("Configuration file error line 22. Please make sure you only changed the custom values.")
     os.system("pause")
     raise SystemExit
 
