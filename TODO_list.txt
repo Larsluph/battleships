@@ -1,15 +1,18 @@
-TODO :
+TO_DO :
   main_menu tk
   add saves
   add powerups
   IA normal
+  mouse coordinate selector
 
 IN_PROGRESS :
 
-TOFIX :
-  
+TO_FIX :
+  pass
+
 DONE :
   start with random turn
-  changes to readme.txt for TL;DR
   IA easy/hardcore
   game time stat
+  board history
+  settings GUI

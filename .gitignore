@@ -1,4 +1,7 @@
-__pycache__
-test
-.vscode
-compiled
+__pycache__/
+test/
+.vscode/
+compiled/
+
+*.json
+*.pyc
