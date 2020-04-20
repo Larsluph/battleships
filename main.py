@@ -53,10 +53,13 @@ class Board:
 
   def get_tile_coords(self, coordinates):
     errors = []
-    if not(1 <= (target_x := coordinates[0] // self.scale[0]) <= self.size[0]): # if x_target isn't in the grid
+    target_x = coordinates[0] // self.scale[0]
+    target_y = coordinates[1] // self.scale[1]
+
+    if not(1 <= target_x <= self.size[0]): # if x_target isn't in the grid
       errors.append("x OOB")
 
-    if not(1 <= (target_y := coordinates[1] // self.scale[1]) <= self.size[1]): # if y_target isn't in the grid
+    if not(1 <= target_y <= self.size[1]): # if y_target isn't in the grid
       errors.append("y OOB")
 
     if not(errors):
@@ -594,14 +597,17 @@ def game(nbr_players):
 
     ### user action
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
-      while (target := InputTarget(window, player, opponent).target) in player.list_shots:
+      target = InputTarget(window, player, opponent).target
+      while target in player.list_shots:
         tk.messagebox.showerror(f"Battleships - Player {current_player}", "you already shot at that point")
+        target = InputTarget(window, player, opponent).target
 
     ### AI action
     elif nbr_players == 1 and current_player == 2: # elif AI's turn
       # Easy
       if ai_strength == 1:
-        while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in player.list_shots:
+        target = (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))
+        while target in player.list_shots:
           pass
 
       # Normal
@@ -619,8 +625,9 @@ def game(nbr_players):
               target_id += 1
               target = opponent.list_coordinates[target_id]
           else:
-            while ( target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1])) ) in player.list_shots or target == None:
-              pass
+            target = (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))
+            while target in player.list_shots or target == None:
+              target = (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))
         else:
           target_id += 1
           target = opponent.list_coordinates[target_id]
