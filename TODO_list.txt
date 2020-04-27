@@ -1,14 +1,11 @@
 TO_DO :
   main_menu tk
   add saves
-  add powerups
   IA normal
-  mouse coordinate selector
 
 IN_PROGRESS :
 
 TO_FIX :
-  pass
 
 DONE :
   start with random turn
@@ -16,3 +13,6 @@ DONE :
   game time stat
   board history
   settings GUI
+  add powerups
+  mouse coordinate selector
+  wireless multiplayer on LAN
