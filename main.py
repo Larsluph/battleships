@@ -25,7 +25,7 @@ class Board:
     self._width = 5
 
     self.size = get_cfg("size") # get the size of the board
-    self.history = list() # stores all canvas' drawing history
+    self.rect_highlight = None # placeholder for the highlight rectangle on the canvas
     self.status_var = tk.StringVar(value='{dmg_status}') # stores last shot's status ('hit' / 'sunk' / 'miss')
     self.highlighted = (None, None) # stores the highlighted tile's coordinates
     self.grid_font = ("Helvetica", 18, "bold") # font to use when drawing columns / rows index
@@ -140,10 +140,9 @@ class Board:
 
   def highlight_tile(self, coordinates: tuple):
     """highlight a tile on the board"""
-    if coordinates == (None, None):
-      self.clear_highlight()
-    else:
-      self.board.create_rectangle(
+    self.clear_highlight()
+    if coordinates != (None, None):
+      self.rect_highlight = self.board.create_rectangle(
         coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
         (coordinates[0]+1)*self.scale[0], (coordinates[1]+1)*self.scale[1],
         width=self._width, outline=self.color["highlight"])
@@ -153,6 +152,7 @@ class Board:
   def clear_highlight(self):
     """clear the highlighted tile"""
     self.highlighted = (None, None)
+    self.board.delete(self.rect_highlight)
 
 
 class Boat:
@@ -179,7 +179,6 @@ class Boat:
     player.hp -= 1
 
     board.draw_hit(self.list_coordinates[damaged_tile])
-    board.history.append(["hit", self.list_coordinates[damaged_tile]])
 
 
 class Player:
@@ -239,34 +238,7 @@ class ApplicationClass:
     self.player = player
     self.opponent = opponent
 
-  def gen_boards(self):
-    """regenerate whole board"""
-    for player in self.players:
-      player.board_player.generate(self.win, 1)
-      player.board_opponent.generate(self.win, 2)
-      player.board_opponent.board.bind("<Button-1>", self.callback_highlight)
-
-      for boat in player.boats:
-        player.board_player.draw_boat(boat)
-
-      for board in [player.board_player, player.board_opponent]:
-        board.draw_grid()
-        for status, arg in board.history:
-          if status == "miss":
-            board.draw_miss(arg)
-          elif status == "hit":
-            board.draw_hit(arg)
-          elif status == "drown":
-            board.draw_drown(arg)
-          elif status == "boat":
-            board.draw_boat(arg)
-
-    grid_set(*self.players)
-
-    return
-
   def callback_highlight(self, event: "tkinter event"):
-    self.gen_boards()
     if self.net:
       if self.is_host:
         show_win(self.p1, self.p2)
@@ -961,7 +933,6 @@ def game(net: bool, nbr_players: int):
           # if tile haven't already been destroyed
           boat.hit( app.opponent, app.opponent.board_player, boat.list_coordinates.index(target) )
           app.player.board_opponent.draw_hit(boat.list_coordinates[boat.list_coordinates.index(target)])
-          app.player.board_opponent.history.append(["hit", boat.list_coordinates[boat.list_coordinates.index(target)]])
 
           app.player.board_player.status_var.set("HIT!")
           if boat.hp == 0:
@@ -969,28 +940,19 @@ def game(net: bool, nbr_players: int):
             app.player.board_player.status_var.set("SUNK!")
             app.player.stats["sunk"] += 1
             app.opponent.board_player.draw_drown(boat)
-            app.opponent.board_player.history.append(["drown", boat])
-
             app.player.board_opponent.draw_boat(boat)
-            app.player.board_opponent.history.append(["boat", boat])
-
             app.player.board_opponent.draw_drown(boat)
-            app.player.board_opponent.history.append(["drown", boat])
       else:
         # if target doesn't hit a ship
         app.player.board_player.status_var.set("MISS!")
         app.player.stats["miss"] += 1
         app.player.board_opponent.draw_miss(target)
-        app.player.board_opponent.history.append(["miss", target])
-
         app.opponent.board_player.draw_miss(target)
-        app.opponent.board_player.history.append(["miss", target])
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       update_window(window)
       popup_block(window, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
 
-      app.gen_boards()
       app.player.board_opponent.clear_highlight()
       if app.net:
         if app.is_host:
