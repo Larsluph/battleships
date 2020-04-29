@@ -13,7 +13,6 @@ import tkinter.font
 import tkinter.messagebox
 from typing import Iterable, Union
 
-import custom_module
 from custom_module.utilities import menu_generator, strfill
 
 
@@ -682,12 +681,6 @@ def init_game(net: bool, nbr_players: int):
     is_host = menu_generator("What do you want to do ?", ["Host","Join"], [1, 0])
 
     if is_host:
-      nic = custom_module.networking.get_net_addrs()
-      nic_name = []
-      nic_addrs = []
-      for x in nic:
-        nic_name.append(x)
-        nic_addrs.append(nic[x])
       ip = ('', 50001)
 
       server = socket.socket()
@@ -915,7 +908,7 @@ def game(net: bool, nbr_players: int):
       targets = []
       for y in range(y_target-1, y_target+2):
         for x in range(x_target-1, x_target+2):
-          if (0 < x < get_cfg("size")[0]) and (0 < y < get_cfg("size")[1]):
+          if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
             targets += [(x, y)]
 
     for target in targets:
