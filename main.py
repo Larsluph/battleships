@@ -660,6 +660,7 @@ def update_window(win: "tkinter window"):
   win.update_idletasks()
 
 def popup_block(master: tk.Tk, title, msg):
+  "show a blocking popup on top of {master}"
   block = tk.Toplevel(master)
   block.grab_set()
   block.focus_set()
@@ -911,6 +912,11 @@ def game(net: bool, nbr_players: int):
           if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
             targets += [(x, y)]
 
+    target_count = {
+      "miss": 0,
+      "hit": 0,
+      "sunk": 0
+    }
     for target in targets:
       app.player.stats["shots"] += 1
       app.player.list_shots.append(target)
@@ -927,9 +933,11 @@ def game(net: bool, nbr_players: int):
           boat.hit( app.opponent, app.opponent.board_player, boat.list_coordinates.index(target) )
           app.player.board_opponent.draw_hit(boat.list_coordinates[boat.list_coordinates.index(target)])
 
+          target_count["hit"] += 1
           app.player.board_player.status_var.set("HIT!")
           if boat.hp == 0:
             # if boat is fully damaged
+            target_count["sunk"] += 1
             app.player.board_player.status_var.set("SUNK!")
             app.player.stats["sunk"] += 1
             app.opponent.board_player.draw_drown(boat)
@@ -937,6 +945,7 @@ def game(net: bool, nbr_players: int):
             app.player.board_opponent.draw_drown(boat)
       else:
         # if target doesn't hit a ship
+        target_count["miss"] += 1
         app.player.board_player.status_var.set("MISS!")
         app.player.stats["miss"] += 1
         app.player.board_opponent.draw_miss(target)
@@ -944,7 +953,10 @@ def game(net: bool, nbr_players: int):
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       update_window(window)
-      popup_block(window, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
+      if len(targets) > 1:
+        popup_block(window, f"Battleships - Player {current_player}", "\n".join([str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]))
+      else:
+        popup_block(window, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
 
       app.player.board_opponent.clear_highlight()
       if app.net:
