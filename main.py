@@ -369,9 +369,9 @@ class InputTarget:
 
 class Config:
   """Configuration window"""
-  def __init__(self, restore: bool = False):
+  def __init__(self, force_restore: bool = False):
     self.cfg_win = tk.Tk()
-    if restore:
+    if force_restore:
       self.restore_cfg()
       return
     self.cfg_win.geometry('600x565+650+100')
@@ -1107,12 +1107,14 @@ def get_cfg(param=None, recovery=False):
     if not(recovery):
       if e == AssertionError:
         msg = "An error occurred while saving the save file.\nA recovery protocol will be initiated.\nError: "+str(sys.exc_info()[1])
+      elif e == FileNotFoundError:
+        msg = "No save file were found.\nA new one will be created.\nError: "+str(sys.exc_info()[1])
       else:
         msg = "An error occurred while reading the save file.\nA recovery protocol will be initiated.\nError: "+str(sys.exc_info()[1])
       win = tk.Tk()
       user = tk.messagebox.askokcancel("Configuration Error", msg)
       if user:
-        Config(True)
+        Config(force_restore=True)
         get_cfg(recovery=True)
         tk.messagebox.showinfo("Configuration Error", "The recovery protocol was successful !")
         win.destroy()
