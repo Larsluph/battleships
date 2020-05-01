@@ -1,8 +1,11 @@
 __pycache__/
-test/
 .vscode/
+build/
+compiled/
 env/
+test/
 
 *.json
 *.pyc
+*.spec
 battleships.save

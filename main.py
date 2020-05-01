@@ -222,15 +222,20 @@ class ApplicationClass:
     self.win.resizable(False, False)
     self.win.protocol("WM_DELETE_WINDOW", self.close)
 
+  def update_window(self):
+    "update main window"
+    self.win.update()
+    self.win.update_idletasks()
+
   def close(self):
     """close main window and exit game"""
     try:
       self.win.destroy()
     except:
       pass
-    print('Action cancelled by user. Exiting...')
+    print('Action cancelled by user. Exiting to main menu...')
     time.sleep(2)
-    raise SystemExit
+    main_menu()
 
   def set_player_turn(self, player: "Player", opponent: "Player"):
     "set current player's turn"
@@ -245,7 +250,7 @@ class ApplicationClass:
         show_win(self.p2, self.p1)
     else:
       show_win(self.player, self.opponent)
-    update_window(self.win)
+    self.update_window()
     self.player.board_opponent.highlight_tile(self.player.board_opponent.get_tile_coords((event.x, event.y)))
 
 
@@ -316,17 +321,16 @@ class InputCoords:
       self.win.destroy()
     except:
       pass
-    print('Action cancelled by user. Exiting...')
+    print('Action cancelled by user. Exiting to main menu...')
     time.sleep(2)
-    raise SystemExit
+    main_menu()
 
 
 class InputTarget:
   """Target selector addons on main window"""
-  def __init__(self, win: "tkinter window", player: "Player", opponent: "Player"):
-    self.win = win
-    self.player = player
-    self.opponent = opponent
+  def __init__(self, app: ApplicationClass):
+    self.win = app.win
+    self.player = app.player
     self.target_coordinates = (None, None)
     self.win.bind("<Return>", self.callback)
     self.win.bind("<space>", self.callback)
@@ -343,11 +347,11 @@ class InputTarget:
     self.var_target_type.set("Basic Ammo")
     for i in range(len(vals)):
       tk.Radiobutton(target_type_frame, indicatoron=0, padx=2, pady=2, variable=self.var_target_type, text=f"{vals[i]} Shot", value=f"{vals[i]} Ammo").grid(row=i, column=0)
-      if player.ammo[f'{vals[i]} Ammo'] > -1:
-        tk.Label(target_type_frame, text=strfill(f"{player.ammo[f'{vals[i]} Ammo']} left", 7, before=True)).grid(row=i, column=1)
+      if self.player.ammo[f'{vals[i]} Ammo'] > -1:
+        tk.Label(target_type_frame, text=strfill(f"{self.player.ammo[f'{vals[i]} Ammo']} left", 7, before=True)).grid(row=i, column=1)
 
     while self.loop:
-      update_window(self.win)
+      app.update_window()
     else:
       self.win.unbind("<Return>")
       self.win.unbind("<space>")
@@ -654,21 +658,16 @@ def hide_win(player: "Player", opponent: "Player"):
   opponent.board_opponent.txt.grid_remove()
   opponent.board_opponent.board.grid_remove()
 
-def update_window(win: "tkinter window"):
-  "update TKinter window"
-  win.update()
-  win.update_idletasks()
-
 def popup_block(master: tk.Tk, title, msg):
   "show a blocking popup on top of {master}"
   block = tk.Toplevel(master)
   block.grab_set()
   block.focus_set()
-  block.title(title)
+  block.title(str(title))
   block.bind('<Return>', lambda x: block.destroy())
   block.bind('<space>', lambda x: block.destroy())
 
-  tk.Label(block, text=msg).pack()
+  tk.Label(block, text=str(msg)).pack()
   but = tk.Button(block, text='Ok', command=block.destroy)
   but.pack()
 
@@ -692,8 +691,8 @@ def init_game(net: bool, nbr_players: int):
         server.listen(1)
         connection, _ = server.accept()
       except:
-        print("Can't create server. Try again later.")
-        time.sleep(2)
+        print("Can't create server. Try again later.\n Error: "+str(sys.exc_info()[1]))
+        os.system("pause")
         main_menu()
       else:
         print("Connected!\nSending game configuration...")
@@ -708,8 +707,8 @@ def init_game(net: bool, nbr_players: int):
       try:
         connection.connect(ip)
       except:
-        print("Can't connect. Try again later.")
-        time.sleep(2)
+        print("Can't connect. Try again later.\n Error: "+str(sys.exc_info()[1]))
+        os.system("pause")
         main_menu()
       else:
         print("Connected!\nReceiving game configuration...")
@@ -797,7 +796,7 @@ def init_game(net: bool, nbr_players: int):
 
   show_win(p1, p2)
   hide_win(p1, p2)
-  update_window(app.win)
+  app.update_window()
   app.win.focus_set()
   print('Starting game...')
 
@@ -815,7 +814,6 @@ def game(net: bool, nbr_players: int):
         [1, 0, 3]
       )
   p1, p2, app = init_game(net, nbr_players)
-  window = app.win
 
   if False:
     print(p1.list_coordinates)
@@ -828,6 +826,8 @@ def game(net: bool, nbr_players: int):
       app.connection.send(repr(current_player).encode())
     else:
       current_player = eval(app.connection.recv(8).decode())
+    app.connection.setblocking(0)
+
   while p1.hp != 0 and p2.hp != 0:
     if app.net:
       if app.is_host:
@@ -840,33 +840,40 @@ def game(net: bool, nbr_players: int):
       player = eval(f"p{current_player}")
       opponent = eval(f"p{int(not(current_player-1))+1}")
     app.set_player_turn(eval(f"p{current_player}"), eval(f"p{int(not(current_player-1))+1}"))
-    window.title(f"Battleships - Player {current_player}")
+    app.win.title(f"Battleships - Player {current_player}")
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       msg = f"Player {current_player}'s turn"
       if not(app.net):
         msg += "\nThe player's board will be displayed when this window will be closed"
-      popup_block(window, f"Battleships - Player {current_player}", msg)
+      popup_block(app.win, f"Battleships - Player {current_player}", msg)
       show_win(player, opponent)
-      update_window(window)
+      app.update_window()
 
     ### user action
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       if app.net:
         if (app.is_host and current_player == 1) or (not(app.is_host) and current_player == 2):
-          while (target := InputTarget(window, app.player, app.opponent)).target_coordinates in app.player.list_shots:
+          while (target := InputTarget(app)).target_coordinates in app.player.list_shots:
             tk.messagebox.showerror(f"Battleships - Player {current_player}", "You already shot at that point !")
           target_type = target.var_target_type.get()
           target = target.target_coordinates
           app.connection.send(repr((target, target_type)).encode())
         else:
           # print("Waiting for your opponent...")
-          target, target_type = eval(app.connection.recv(1024).decode())
+          try:
+            target, target_type = eval(app.connection.recv(1024).decode())
+          except BlockingIOError:
+            app.update_window()
+          except:
+            popup_block(app.win, "Game crashed!", sys.exc_info()[1])
+            raise SystemExit
       else:
-        while (target := InputTarget(window, app.player, app.opponent)).target_coordinates in app.player.list_shots:
+        while (target := InputTarget(app)).target_coordinates in app.player.list_shots:
           tk.messagebox.showerror(f"Battleships - Player {current_player}", "You already shot at that point !")
         target_type = target.var_target_type.get()
         target = target.target_coordinates
+    ### END user action
 
     ### AI action
     elif nbr_players == 1 and current_player == 2: # elif AI's turn
@@ -900,7 +907,7 @@ def game(net: bool, nbr_players: int):
             target_id += 1
             target = app.opponent.list_coordinates[target_id]
         target_type = "Basic Ammo"
-    ### END user action
+    ### END AI action
 
     if target_type == "Basic Ammo":
       targets = [target]
@@ -917,46 +924,47 @@ def game(net: bool, nbr_players: int):
       "hit": 0,
       "sunk": 0
     }
+    app.player.stats["shots"] += 1
     for target in targets:
-      app.player.stats["shots"] += 1
-      app.player.list_shots.append(target)
-      if target in app.opponent.list_coordinates:
-        # if target hit a ship
-        app.player.stats["hits"] += 1
+      if not(target in app.player.list_shots):
+        app.player.list_shots.append(target)
+        if target in app.opponent.list_coordinates:
+          # if target hit a ship
+          app.player.stats["hits"] += 1
 
-        for boat in app.opponent.boats:
-          if target in boat.list_coordinates:
-            # select boat located on target
-            break
-        if boat.damages[boat.list_coordinates.index(target)] != 0:
-          # if tile haven't already been destroyed
-          boat.hit( app.opponent, app.opponent.board_player, boat.list_coordinates.index(target) )
-          app.player.board_opponent.draw_hit(boat.list_coordinates[boat.list_coordinates.index(target)])
+          for boat in app.opponent.boats:
+            if target in boat.list_coordinates:
+              # select boat located on target
+              break
+          if boat.damages[boat.list_coordinates.index(target)] != 0:
+            # if tile haven't already been destroyed
+            boat.hit( app.opponent, app.opponent.board_player, boat.list_coordinates.index(target) )
+            app.player.board_opponent.draw_hit(boat.list_coordinates[boat.list_coordinates.index(target)])
 
-          target_count["hit"] += 1
-          app.player.board_player.status_var.set("HIT!")
-          if boat.hp == 0:
-            # if boat is fully damaged
-            target_count["sunk"] += 1
-            app.player.board_player.status_var.set("SUNK!")
-            app.player.stats["sunk"] += 1
-            app.opponent.board_player.draw_drown(boat)
-            app.player.board_opponent.draw_boat(boat)
-            app.player.board_opponent.draw_drown(boat)
-      else:
-        # if target doesn't hit a ship
-        target_count["miss"] += 1
-        app.player.board_player.status_var.set("MISS!")
-        app.player.stats["miss"] += 1
-        app.player.board_opponent.draw_miss(target)
-        app.opponent.board_player.draw_miss(target)
+            target_count["hit"] += 1
+            app.player.board_player.status_var.set("HIT!")
+            if boat.hp == 0:
+              # if boat is fully damaged
+              target_count["sunk"] += 1
+              app.player.board_player.status_var.set("SUNK!")
+              app.player.stats["sunk"] += 1
+              app.opponent.board_player.draw_drown(boat)
+              app.player.board_opponent.draw_boat(boat)
+              app.player.board_opponent.draw_drown(boat)
+        else:
+          # if target doesn't hit a ship
+          target_count["miss"] += 1
+          app.player.board_player.status_var.set("MISS!")
+          app.player.stats["miss"] += 1
+          app.player.board_opponent.draw_miss(target)
+          app.opponent.board_player.draw_miss(target)
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
-      update_window(window)
+      app.update_window()
       if len(targets) > 1:
-        popup_block(window, f"Battleships - Player {current_player}", "\n".join([str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]))
+        popup_block(app.win, f"Battleships - Player {current_player}", "\n".join([str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]))
       else:
-        popup_block(window, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
+        popup_block(app.win, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
 
       app.player.board_opponent.clear_highlight()
       if app.net:
@@ -1105,12 +1113,12 @@ def get_cfg(param=None, recovery=False):
       return eval(param)
   except Exception as e:
     if not(recovery):
-      if e == AssertionError:
+      if type(e) == AssertionError:
         msg = "An error occurred while saving the save file.\nA recovery protocol will be initiated.\nError: "+str(sys.exc_info()[1])
-      elif e == FileNotFoundError:
+      elif type(e) == FileNotFoundError:
         msg = "No save file were found.\nA new one will be created.\nError: "+str(sys.exc_info()[1])
       else:
-        msg = "An error occurred while reading the save file.\nA recovery protocol will be initiated.\nError: "+str(sys.exc_info()[1])
+        msg = "An error occurred while reading the save file.\nA recovery protocol will be initiated.\nError: \n"+str(sys.exc_info()[1])
       win = tk.Tk()
       user = tk.messagebox.askokcancel("Configuration Error", msg)
       if user:
