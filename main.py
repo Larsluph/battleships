@@ -189,6 +189,7 @@ class Player:
     self.boats = []
     self.list_coordinates = [None]
     self.list_shots = []
+    self.last_status = "miss"
     self.ammo = get_cfg("ammo")
     self.stats = {
       "shots": 0,
@@ -203,6 +204,161 @@ class Player:
     self.board_opponent = Board()
 
     return
+
+
+class AI(Player):
+  target_id = 0
+  _strength = 0
+  base_hit = (None,None)
+  i = 0
+
+  @property
+  def ai_strength(self):
+    return self._strength
+
+  @ai_strength.setter
+  def ai_strength(self, lvl):
+    self._strength = lvl
+
+  def ai_turn(self, app):
+    if self._strength == 1:
+      return self.ai_easy(app)
+
+    elif self._strength == 2:
+      return self.ai_human(app)
+
+    elif self._strength == 3:
+      return self.ai_snipe(app)
+
+    elif self._strength == 4:
+      return self.ai_godlike(app)
+
+  def ai_easy(self, app):
+    while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+      pass
+    return target, "Basic Ammo"
+
+  def ai_human(self, app):
+    if self.target_id == 0 or app.player.last_status == "sunk": # if boat not found or last sunk
+      print("target_id= 0")
+      while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots: # random shot
+        pass
+      if target in app.opponent.list_coordinates: # if boat is found
+        self.target_id = 1
+        self.base_hit = target # save coords for future shots
+        self.check = [(-1,0), (0,1), (1,0), (0,-1)] # all possible shots around base_target
+      else:
+        self.target_id = 0
+      return target, "Basic Ammo"
+
+    if self.target_id == 1: # if boat just found
+      print("target_id= 1")
+      temp = self.check.pop(random.randint(0, len(self.check)-1))
+      target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
+
+      while not(1 <= target[0] <= get_cfg("size")[0] and 1 <= target[1] <= get_cfg("size")[1]) or target in self.list_shots:
+        temp = self.check.pop(random.randint(0, len(self.check)-1))
+        target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
+        if len(self.check) == 0:
+          self.target_id = 0
+          while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+            pass
+          break
+
+      self.target_id = 2
+      return target, "Basic Ammo"
+
+    if self.target_id == 2: # if boat found but rot not found
+      print("target_id= 2")
+      if app.player.last_status == "hit":
+        self.check = [(-1,0), (0,1), (1,0), (0,-1)]
+        self.target_id = 3
+        self.i = round((random.randint(0,1)-.5) *2) # random -1 or 1
+      else:
+        temp = self.check.pop(random.randint(0, len(self.check)-1))
+        target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
+        while (target := (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])) in self.list_shots or not(1 <= target[0] <= get_cfg("size")[0] and 1 <= target[1] <= get_cfg("size")[1]):
+          temp = self.check.pop(random.randint(0, len(self.check)-1))
+          target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
+          if len(self.check) == 0:
+            self.target_id = 0
+            while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+              pass
+            break
+        return target, "Basic Ammo"
+
+    if self.target_id == 3: # if boat found and rot found
+      print("target_id= 3")
+      for boat in app.opponent.boats:
+        if self.base_hit in boat.list_coordinates:
+          # select boat located on target
+          break
+      rot = boat.base_coordinates[2]
+      if rot:
+        target = (self.base_hit[0], self.base_hit[1]+self.i)
+        while target in self.list_shots or not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]):
+          if self.i < 0:
+            self.i -= 1
+          else:
+            self.i += 1
+          if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == "miss":
+            self.i = round(self.i / -abs(self.i))
+          target = (self.base_hit[0], self.base_hit[1]+self.i)
+        print(f"{self.i=}")
+        return (self.base_hit[0], self.base_hit[1]+self.i), "Basic Ammo"
+
+      else:
+        target = (self.base_hit[0]+self.i, self.base_hit[1])
+        while target in self.list_shots or not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]):
+          if self.i < 0:
+            self.i -= 1
+          else:
+            self.i += 1
+          if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == "miss":
+            self.i = round(self.i / -abs(self.i))
+          target = (self.base_hit[0]+self.i, self.base_hit[1])
+        print(f"{self.i=}")
+        return (self.base_hit[0]+self.i, self.base_hit[1]), "Basic Ammo"
+
+  def ai_snipe(self, app):
+    if app.opponent.list_coordinates[self.target_id] == None:
+        success_chance = 1/10 # % chance to hit the player
+        if random.random() <= success_chance:
+          self.target_id += 1
+          target = app.opponent.list_coordinates[self.target_id]
+          while target in self.list_shots or target == None:
+            self.target_id += 1
+            target = app.opponent.list_coordinates[self.target_id]
+        else:
+          while ( target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1])) ) in self.list_shots or target == None:
+            pass
+    else:
+      self.target_id += 1
+      target = app.opponent.list_coordinates[self.target_id]
+      while target in self.list_shots or target == None:
+        self.target_id += 1
+        target = app.opponent.list_coordinates[self.target_id]
+    return target, "Basic Ammo"
+
+  def ai_godlike(self, app):
+    if app.opponent.list_coordinates[self.target_id] == None:
+        success_chance = 1/3 # % chance to hit the player
+        if random.random() <= success_chance:
+          self.target_id += 1
+          target = app.opponent.list_coordinates[self.target_id]
+          while target in self.list_shots or target == None:
+            self.target_id += 1
+            target = app.opponent.list_coordinates[self.target_id]
+        else:
+          while ( target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1])) ) in self.list_shots or target == None:
+            pass
+    else:
+      self.target_id += 1
+      target = app.opponent.list_coordinates[self.target_id]
+      while target in self.list_shots or target == None:
+        self.target_id += 1
+        target = app.opponent.list_coordinates[self.target_id]
+    return target, "Basic Ammo"
 
 
 class ApplicationClass:
@@ -720,7 +876,12 @@ def init_game(net: bool, nbr_players: int):
   print("init game...")
   size, boatnbr, caps, *_ = get_cfg()
   p1 = Player(1, boatnbr)
-  p2 = Player(2, boatnbr)
+  if nbr_players == 2:
+    p2 = Player(2, boatnbr)
+  else:
+    p2 = AI(2, boatnbr)
+    while not(p2.ai_strength):
+      p2.ai_strength = menu_generator("Select the AI's difficulty", ["Dumbass", "Kinda Human", "Basic Sniper", "Godlike Sniper"], [1, 2, 3, 4])
 
   for p in [p1, p2]:
     if net and p.id == 2:
@@ -803,16 +964,7 @@ def init_game(net: bool, nbr_players: int):
   return (p1, p2, app)
 ############################################################################################
 def game(net: bool, nbr_players: int):
-  # rules()
-  if nbr_players == 1:
-    ai_strength = 0
-    target_id = 0
-    while ai_strength == 0:
-      ai_strength = menu_generator(
-        "Select the AI's difficulty",
-        ["Easy", "Normal (in development)", "Hardcore"],
-        [1, 0, 3]
-      )
+  rules()
   p1, p2, app = init_game(net, nbr_players)
 
   if False:
@@ -860,7 +1012,7 @@ def game(net: bool, nbr_players: int):
           target = target.target_coordinates
           app.connection.send(repr((target, target_type)).encode())
         else:
-          # print("Waiting for your opponent...")
+          # waiting for the opponent
           try:
             target, target_type = eval(app.connection.recv(1024).decode())
           except BlockingIOError:
@@ -877,36 +1029,7 @@ def game(net: bool, nbr_players: int):
 
     ### AI action
     elif nbr_players == 1 and current_player == 2: # elif AI's turn
-      # Easy
-      if ai_strength == 1:
-        while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in app.player.list_shots:
-          pass
-        target_type = "Basic Ammo"
-
-      # Normal
-      elif ai_strength == 2:
-        raise NotImplementedError
-
-      # Hardcore
-      elif ai_strength == 3:
-        if app.opponent.list_coordinates[target_id] == None:
-          success_chances = 20 # % chance to hit the player
-          if random.randint(1, 100) <= success_chances:
-            target_id += 1
-            target = app.opponent.list_coordinates[target_id]
-            while target in app.player.list_shots or target == None:
-              target_id += 1
-              target = app.opponent.list_coordinates[target_id]
-          else:
-            while ( target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1])) ) in app.player.list_shots or target == None:
-              pass
-        else:
-          target_id += 1
-          target = app.opponent.list_coordinates[target_id]
-          while target in app.player.list_shots or target == None:
-            target_id += 1
-            target = app.opponent.list_coordinates[target_id]
-        target_type = "Basic Ammo"
+      target, target_type = p2.ai_turn(app)
     ### END AI action
 
     if target_type == "Basic Ammo":
@@ -962,9 +1085,12 @@ def game(net: bool, nbr_players: int):
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       app.update_window()
       if len(targets) > 1:
-        popup_block(app.win, f"Battleships - Player {current_player}", "\n".join([str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]))
+        checksum = [str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]
+        popup_block(app.win, f"Battleships - Player {current_player}", "\n".join(checksum))
+        app.player.last_status = checksum[-1][-5:-1].lower().strip()
       else:
         popup_block(app.win, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
+        app.player.last_status = app.player.board_player.status_var.get().lower()[:-1]
 
       app.player.board_opponent.clear_highlight()
       if app.net:
@@ -974,6 +1100,11 @@ def game(net: bool, nbr_players: int):
           hide_win(p1, p2)
       else:
         hide_win(app.player, app.opponent)
+    if len(targets) > 1:
+      checksum = [str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]
+      app.player.last_status = checksum[-1][-5:-1].lower().strip()
+    else:
+      app.player.last_status = app.player.board_player.status_var.get().lower()[:-1]
 
     current_player = int(not(current_player-1))+1
 
