@@ -240,7 +240,6 @@ class AI(Player):
 
   def ai_human(self, app):
     if self.target_id == 0 or app.player.last_status == "sunk": # if boat not found or last sunk
-      print("target_id= 0")
       while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots: # random shot
         pass
       if target in app.opponent.list_coordinates: # if boat is found
@@ -252,7 +251,6 @@ class AI(Player):
       return target, "Basic Ammo"
 
     if self.target_id == 1: # if boat just found
-      print("target_id= 1")
       temp = self.check.pop(random.randint(0, len(self.check)-1))
       target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
 
@@ -269,7 +267,6 @@ class AI(Player):
       return target, "Basic Ammo"
 
     if self.target_id == 2: # if boat found but rot not found
-      print("target_id= 2")
       if app.player.last_status == "hit":
         self.check = [(-1,0), (0,1), (1,0), (0,-1)]
         self.target_id = 3
@@ -288,7 +285,6 @@ class AI(Player):
         return target, "Basic Ammo"
 
     if self.target_id == 3: # if boat found and rot found
-      print("target_id= 3")
       for boat in app.opponent.boats:
         if self.base_hit in boat.list_coordinates:
           # select boat located on target
@@ -304,7 +300,6 @@ class AI(Player):
           if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == "miss":
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0], self.base_hit[1]+self.i)
-        print(f"{self.i=}")
         return (self.base_hit[0], self.base_hit[1]+self.i), "Basic Ammo"
 
       else:
@@ -317,7 +312,6 @@ class AI(Player):
           if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == "miss":
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0]+self.i, self.base_hit[1])
-        print(f"{self.i=}")
         return (self.base_hit[0]+self.i, self.base_hit[1]), "Basic Ammo"
 
   def ai_snipe(self, app):
@@ -1129,10 +1123,8 @@ def end_game(app: ApplicationClass):
   print("GAME IS FINISHED!")
   print(f"THE GAME LASTED {str(round(end_time, 2))} SECONDS.")
   if p1.hp == 0 and p2.hp != 0:
-    if app.nbr_players == 2:
-      print("PLAYER 2 WINS!")
-    else:
-      print("AI WINS!")
+    if app.nbr_players == 2: print("PLAYER 2 WINS!")
+    else: print("AI WINS!")
   elif p1.hp != 0 and p2.hp == 0:
     print("PLAYER 1 WINS!")
   elif p1.hp == 0 and p2.hp == 0:
