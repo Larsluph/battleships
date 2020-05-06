@@ -15,6 +15,7 @@ from typing import Iterable, Union
 
 from custom_module.utilities import menu_generator, strfill
 
+from locales import engb as strlang
 
 class Board:
   """board object"""
@@ -33,9 +34,9 @@ class Board:
     """generate label and canvas"""
     # set the board's title
     if player == 1:
-      self.txt = "Your Playboard"
+      self.txt = strlang.player_playboard
     else:
-      self.txt = "Enemy's Playboard"
+      self.txt = strlang.opponent_playboard
 
     # create board related widgets
     self.txt = tk.Label(win, text=self.txt)
@@ -137,14 +138,20 @@ class Board:
       (coordinates[0]+1)*self.scale[0], coordinates[1]*self.scale[1],
       width=self._width, fill=self.color["miss"])
 
-  def highlight_tile(self, coordinates: tuple):
+  def highlight_tile(self, coordinates: tuple, coordinates_2: tuple = None):
     """highlight a tile on the board"""
     self.clear_highlight()
     if coordinates != (None, None):
-      self.rect_highlight = self.board.create_rectangle(
-        coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
-        (coordinates[0]+1)*self.scale[0], (coordinates[1]+1)*self.scale[1],
-        width=self._width, outline=self.color["highlight"])
+      if coordinates_2 == None:
+        self.rect_highlight = self.board.create_rectangle(
+          coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
+          (coordinates[0]+1)*self.scale[0], (coordinates[1]+1)*self.scale[1],
+          width=self._width, outline=self.color["highlight"])
+      else:
+        self.rect_highlight = self.board.create_rectangle(
+          coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
+          (coordinates_2[0]+1)*self.scale[0], (coordinates_2[1]+1)*self.scale[1],
+          width=self._width, outline=self.color["highlight"])
 
       self.highlighted = coordinates
 
@@ -189,10 +196,15 @@ class Player:
     self.boats = []
     self.list_coordinates = [None]
     self.list_shots = []
-    self.last_status = "miss"
+    self.last_status = strlang.miss.lower()
     self.ammo = get_cfg("ammo")
     self.stats = {
       "shots": 0,
+      "ammo used": {
+        "Basic Ammo": 0,
+        "Heavy Ammo": 0,
+        "Sonar Ammo": 0
+      },
       "miss": 0,
       "hits": 0,
       "sunk": 0
@@ -209,7 +221,7 @@ class Player:
 class AI(Player):
   target_id = 0
   _strength = 0
-  base_hit = (None,None)
+  base_hit = (None, None)
   i = 0
 
   @property
@@ -239,7 +251,7 @@ class AI(Player):
     return target, "Basic Ammo"
 
   def ai_human(self, app):
-    if self.target_id == 0 or app.player.last_status == "sunk": # if boat not found or last sunk
+    if self.target_id == 0 or app.player.last_status == strlang.sunk.lower(): # if boat not found or last sunk
       while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots: # random shot
         pass
       if target in app.opponent.list_coordinates: # if boat is found
@@ -267,7 +279,7 @@ class AI(Player):
       return target, "Basic Ammo"
 
     if self.target_id == 2: # if boat found but rot not found
-      if app.player.last_status == "hit":
+      if app.player.last_status == strlang.hit.lower():
         self.check = [(-1,0), (0,1), (1,0), (0,-1)]
         self.target_id = 3
         self.i = round((random.randint(0,1)-.5) *2) # random -1 or 1
@@ -297,7 +309,7 @@ class AI(Player):
             self.i -= 1
           else:
             self.i += 1
-          if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == "miss":
+          if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == strlang.miss.lower():
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0], self.base_hit[1]+self.i)
         return (self.base_hit[0], self.base_hit[1]+self.i), "Basic Ammo"
@@ -309,7 +321,7 @@ class AI(Player):
             self.i -= 1
           else:
             self.i += 1
-          if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == "miss":
+          if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == strlang.miss.lower():
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0]+self.i, self.base_hit[1])
         return (self.base_hit[0]+self.i, self.base_hit[1]), "Basic Ammo"
@@ -368,7 +380,7 @@ class ApplicationClass:
     self.connection = connection
 
     self.win = tk.Tk()
-    self.win.title(f"Python Battleships")
+    self.win.title(strlang.game_title)
     self.win.resizable(False, False)
     self.win.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -383,7 +395,7 @@ class ApplicationClass:
       self.win.destroy()
     except:
       pass
-    print('Action cancelled by user. Exiting to main menu...')
+    print(strlang.error_exit)
     time.sleep(2)
     main_menu()
 
@@ -408,32 +420,32 @@ class InputCoords:
   """Boats window selector"""
   def __init__(self, capacity: int, player_nbr: int, boat_id: int):
     self.win = tk.Tk()
-    self.win.title(f"Player {player_nbr} - Place Boat {boat_id}")
+    self.win.title(eval("f"+repr(strlang.place_boat)))
     self.win.resizable(False, False)
     self.win.protocol("WM_DELETE_WINDOW", self.close)
     self.win.bind("<Return>", self.callback)
     self.win.bind("<space>", self.callback)
 
-    tk.Label(self.win, text="boat's capacity :").grid(row=1, column=1)
+    tk.Label(self.win, text=strlang.boat_capacity).grid(row=1, column=1)
     self.cap = tk.StringVar()
     self.cap.set(capacity)
     tk.Entry(self.win, justify="center", textvariable=self.cap, state="disabled", width=2).grid(row=1, column=2)
 
-    tk.Label(self.win, text="Enter the x position of the boat :").grid(row=2, column=1)
+    tk.Label(self.win, text=strlang.x_boat).grid(row=2, column=1)
     self.x = tk.Scale(self.win, from_=1, to=get_cfg("size")[0], orient="horizontal", takefocus=1)
     self.x.grid(row=2, column=2)
 
-    tk.Label(self.win, text="Enter the y position of the boat :").grid(row=3, column=1)
+    tk.Label(self.win, text=strlang.y_boat).grid(row=3, column=1)
     self.y = tk.Scale(self.win, from_=1, to=get_cfg("size")[1], orient="horizontal", takefocus=1)
     self.y.grid(row=3, column=2)
 
-    tk.Label(self.win, text="Choose the boat's rotation :").grid(row=4, column=1)
-    choices = ['Horizontal', 'Vertical']
+    tk.Label(self.win, text=strlang.rot_boat).grid(row=4, column=1)
+    choices = [strlang.horizontal, strlang.vertical]
     self.rotation = tk.StringVar(self.win)
     self.rotation.set(choices[0])
     tk.OptionMenu(self.win, self.rotation, *choices).grid(row=4, column=2)
 
-    tk.Button(self.win, text="Confirm!", command=self.callback).grid(row=5, column=1, columnspan=2)
+    tk.Button(self.win, text=strlang.confirm, command=self.callback).grid(row=5, column=1, columnspan=2)
 
     self.x.focus_force()
     self.win.mainloop()
@@ -445,19 +457,19 @@ class InputCoords:
 
     self.var_x = self.x.get()
     self.var_y = self.y.get()
-    self.var_rotation = 0 if self.rotation.get() =='Horizontal' else 1
+    self.var_rotation = 0 if self.rotation.get() == strlang.horizontal else 1
 
     if not((get_cfg("size")[0]+1) - int(self.cap.get()) >= self.var_x > 0) and not(self.var_rotation):
         errors.append("x OOB")
         self.x.set(1)
 
-        tk.messagebox.showwarning("Warning", "The boat must fit in the grid!")
+        tk.messagebox.showwarning(strlang.warning, strlang.error_boat_fit)
 
     elif not((get_cfg("size")[1]+1) - int(self.cap.get()) >= self.var_y > 0) and self.var_rotation:
         errors.append("y OOB")
         self.y.set(1)
 
-        tk.messagebox.showwarning("Warning", "The boat must fit in the grid!")
+        tk.messagebox.showwarning(strlang.warning, strlang.error_boat_fit)
 
     if errors == []:
         del(self.x, self.y)
@@ -471,7 +483,7 @@ class InputCoords:
       self.win.destroy()
     except:
       pass
-    print('Action cancelled by user. Exiting to main menu...')
+    print(strlang.error_exit)
     time.sleep(2)
     main_menu()
 
@@ -485,14 +497,14 @@ class InputTarget:
     self.win.bind("<Return>", self.callback)
     self.win.bind("<space>", self.callback)
     self.loop = True
-    confirm_button = tk.Button(self.win, text='Fire !', command=self.callback, height=2, width=26, relief='groove', bd=4, padx=5, pady=5, justify='center')
+    confirm_button = tk.Button(self.win, text=strlang.fire, command=self.callback, height=2, width=26, relief='groove', bd=4, padx=5, pady=5, justify='center')
     confirm_button.grid(row=10, column=1, columnspan=2)
 
-    target_type_frame = tk.LabelFrame(self.win, text="Ammo Selection", height=(self.player.board_player.size[0]+1)*self.player.board_player.scale[1], width=125, padx=4, pady=4, relief='ridge', bd=3)
+    target_type_frame = tk.LabelFrame(self.win, text=strlang.frame_target, height=(self.player.board_player.size[0]+1)*self.player.board_player.scale[1], width=125, padx=4, pady=4, relief='ridge', bd=3)
     target_type_frame.grid_propagate(0)
     target_type_frame.grid(row=2, column=3, rowspan=4)
 
-    vals = ["Basic", "Heavy"]
+    vals = ["Basic", "Heavy", "Sonar"]
     self.var_target_type = tk.StringVar()
     self.var_target_type.set("Basic Ammo")
     for i in range(len(vals)):
@@ -513,9 +525,11 @@ class InputTarget:
   def callback(self, event: "tkinter event" = None):
     self.target_coordinates = self.player.board_opponent.highlighted
     if self.target_coordinates == (None, None):
-      tk.messagebox.showerror(message="Target is invalid.\nUnable to fire.")
-    elif self.var_target_type.get() != "Basic Ammo" and self.player.ammo[self.var_target_type.get()] == 0:
-      tk.messagebox.showerror(message="You don't have any more ammo of this type.\nUnable to fire.")
+      tk.messagebox.showerror(message=strlang.invalid_target)
+    elif self.player.ammo[self.var_target_type.get()] == 0:
+      tk.messagebox.showerror(message=strlang.no_ammo_left)
+    elif self.player.ammo[self.var_target_type.get()] < 0:
+      self.loop = False
     else:
       self.player.ammo[self.var_target_type.get()] -= 1
       self.loop = False
@@ -538,10 +552,10 @@ class Config:
     monospaced_font.config(family="Consolas")
 
     ####################
-    self.boats_frame = tk.LabelFrame(self.cfg_win, text="Boats Configuration", padx=10, pady=10)
+    self.boats_frame = tk.LabelFrame(self.cfg_win, text=strlang.frame_cfg_boat, padx=10, pady=10)
     self.boats_frame.place(x=10, y=7)
 
-    tk.Label(self.boats_frame, text="Enter number of boats per team :").grid(row=1, column=1)
+    tk.Label(self.boats_frame, text=strlang.cfg_nbrboats).grid(row=1, column=1)
 
     self.boatnbr_scale = tk.Scale(self.boats_frame, from_=1, to=min(size), orient="horizontal")
     self.boatnbr_scale.set(boatnbr)
@@ -552,14 +566,14 @@ class Config:
 
     self.caps = []
     for i in range(len(caps)):
-      lbl = tk.Label(self.caps_frame, text=f"boat{i+1}'s capacity")
+      lbl = tk.Label(self.caps_frame, text=eval("f"+repr(strlang.cfg_boat_cap)))
       lbl.grid(row=i, column=0)
       cap = tk.Scale(self.caps_frame, from_=2, to=min(size), orient="horizontal")
       cap.set(caps[i])
       cap.grid(row=i, column=1)
       self.caps.append([lbl, cap])
     ####################
-    self.missiles_frame = tk.LabelFrame(self.cfg_win, text="Ammo Configuration", padx=10, pady=10)
+    self.missiles_frame = tk.LabelFrame(self.cfg_win, text=strlang.cfg_ammo, padx=10, pady=10)
     self.missiles_frame.place(x=338, y=7)
 
     tk.Label(self.missiles_frame, text=strfill("Basic Ammo", 15)).grid(row=0, column=0)
@@ -568,7 +582,7 @@ class Config:
     tk.Entry(self.missiles_frame, textvariable=basic_shot, state='disabled', width=3, font=monospaced_font).grid(row=0, column=1)
 
     self.missiles = {}
-    self.missiles_list = ["Heavy Ammo"]
+    self.missiles_list = ["Heavy Ammo", "Sonar Ammo"]
     for i in range(len(self.missiles_list)):
       lbl = tk.Label(self.missiles_frame, text=strfill(self.missiles_list[i], 15))
       lbl.grid(row=1+i, column=0)
@@ -579,11 +593,16 @@ class Config:
 
       self.missiles[self.missiles_list[i]] = shot
 
-    ####################
-    self.color_frame = tk.LabelFrame(self.cfg_win, text="Colors Configuration", padx=10, pady=10)
-    self.color_frame.place(x=338, y=107)
+    tk.Label(self.missiles_frame, text=strlang.probe_range).grid(row=2+i, column=0)
+    self.probe_range = tk.Scale(self.missiles_frame, from_=1, to=min(size), orient="horizontal")
+    self.probe_range.set(get_cfg("probe_range"))
+    self.probe_range.grid(row=2+i, column=1)
 
-    self.presets = ["Light Mode", "Night Mode", "User Defined"]
+    ####################
+    self.color_frame = tk.LabelFrame(self.cfg_win, text=strlang.frame_cfg_color, padx=10, pady=10)
+    self.color_frame.place(x=338, y=160)
+
+    self.presets = [strlang.light_mode, strlang.night_mode, strlang.user_color]
     self.selected_preset = tk.StringVar(self.color_frame)
     self.selected_preset.set(self.presets[-1])
     tk.OptionMenu(self.color_frame, self.selected_preset, *self.presets, command=self.change_preset).grid(row=0, column=0, columnspan=3)
@@ -598,15 +617,15 @@ class Config:
 
       self.colors.append([lbl, color])
 
-    button = tk.Button(self.color_frame, text="Color picker utility", command=self.color_selector)
+    button = tk.Button(self.color_frame, text=strlang.color_picker_util, command=self.color_selector)
     button.grid(row=2+len(colors), column=1, columnspan=2)
     self.color_lbl = tk.Entry(self.color_frame, width=8)
     self.color_lbl.grid(row=3+len(colors), column=1, columnspan=2)
 
-    tk.Button(self.color_frame, text="Preview Board", command=self.preview_board).grid(row=4+len(colors), column=1, columnspan=2)
+    tk.Button(self.color_frame, text=strlang.preview, command=self.preview_board).grid(row=4+len(colors), column=1, columnspan=2)
     ####################
-    tk.Button(self.cfg_win, text="Confirm", command=self.save_cfg).place(x=230, y=530)
-    tk.Button(self.cfg_win, text="Reset", command=self.restore_cfg).place(x=325, y=530)
+    tk.Button(self.cfg_win, text=strlang.confirm, command=self.save_cfg).place(x=230, y=530)
+    tk.Button(self.cfg_win, text=strlang.reset, command=self.restore_cfg).place(x=325, y=530)
     ####################
     self.boatnbr_scale.config(command=self.caps_gen)
     self.boatnbr_scale.focus_set()
@@ -623,7 +642,7 @@ class Config:
     self.caps = []
 
     for i in range(boatnbr):
-      lbl = tk.Label(self.caps_frame, text=f"boat{i+1}'s capacity")
+      lbl = tk.Label(self.caps_frame, text=eval("f"+repr(strlang.cfg_boat_cap)))
       lbl.grid(row=i, column=0)
       cap = tk.Scale(self.caps_frame, from_=2, to=10, orient="horizontal")
       cap.grid(row=i, column=1)
@@ -658,7 +677,7 @@ class Config:
         assert len(color) == 7
       except:
         self.colors[i][1].delete(0,tk.END)
-        self.colors[i][1].insert(0, 'invalid')
+        self.colors[i][1].insert(0, strlang.invalid)
         return
       else:
         colors[color_name[i]] = color
@@ -676,8 +695,9 @@ class Config:
     sample.draw_miss((6, 4))
     sample.draw_hit((3, 5))
     sample.draw_drown(boat1)
-
     sample.draw_grid()
+    sample.highlight_tile((5, 3), (8, 6))
+
     sample.txt.pack()
     sample.board.pack()
 
@@ -689,6 +709,7 @@ class Config:
     boatnbr = self.boatnbr_scale.get()
     caps = [cap.get() for lbl, cap in self.caps]
     ammo = [self.missiles[x].get() for x in self.missiles_list]
+    probe_range = self.probe_range.get()
     colors = [color.get() for lbl, color in self.colors]
 
     assert isinstance(size, tuple)
@@ -706,6 +727,8 @@ class Config:
     for x in ammo:
       assert isinstance(x,int)
 
+    assert isinstance(probe_range, int)
+
     assert isinstance(colors, list)
     for x in colors:
       assert isinstance(x, str)
@@ -722,6 +745,8 @@ class Config:
       for x in ammo:
         f.write(f"{x}\n")
 
+      f.write(f"{probe_range}\n")
+
       for i in range(len(colors)):
         f.write(f"{colors[i]}\n")
 
@@ -733,8 +758,10 @@ class Config:
     boatnbr = 5
     caps = [2, 3, 3, 4, 5]
     ammo = {
-      "Heavy Ammo": 0
+      "Heavy Ammo": 0,
+      "Sonar Ammo": 0
     }
+    probe_range = 4
     colors = {
         "background": "#61c5ff",
         "boat"      : "#808080",
@@ -756,6 +783,8 @@ class Config:
       for x in ammo:
         f.write(f"{ammo[x]}\n")
 
+      f.write(f"{probe_range}\n")
+
       for i in colors:
         f.write(f"{colors[i]}\n")
 
@@ -763,7 +792,7 @@ class Config:
 
   def close(self):
     """window close protocol callback"""
-    user = tk.messagebox.askyesnocancel("Save", "Do you want to save changes ?", default='yes', icon='question')
+    user = tk.messagebox.askyesnocancel(strlang.save, strlang.save_ask, default='yes', icon='question')
     if user == True:
       self.save_cfg()
     elif user == False:
@@ -818,7 +847,7 @@ def popup_block(master: tk.Tk, title, msg):
   block.bind('<space>', lambda x: block.destroy())
 
   tk.Label(block, text=str(msg)).pack()
-  but = tk.Button(block, text='Ok', command=block.destroy)
+  but = tk.Button(block, text=strlang.ok, command=block.destroy)
   but.pack()
 
   master.wait_window(block)
@@ -828,7 +857,7 @@ def init_game(net: bool, nbr_players: int):
   os.system('cls')
 
   if net:
-    is_host = menu_generator("What do you want to do ?", ["Host","Join"], [1, 0])
+    is_host = menu_generator(strlang.ask_host, [strlang.host, strlang.join], [1, 0])
 
     if is_host:
       ip = ('', 50001)
@@ -837,37 +866,36 @@ def init_game(net: bool, nbr_players: int):
       server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       try:
         server.bind(ip)
-        print(f"Server binded\nWaiting for a connection...")
+        print(strlang.server_binded)
         server.listen(1)
         connection, _ = server.accept()
       except:
-        print("Can't create server. Try again later.\n Error: "+str(sys.exc_info()[1]))
+        print(strlang.server_error+str(sys.exc_info()[1]))
         os.system("pause")
         main_menu()
       else:
-        print("Connected!\nSending game configuration...")
+        print(strlang.connected)
         with open("battleships.save", mode='rb') as f:
           connection.send(f.read(1024))
         connection.recv(1024)
-        print("Game configuration sent!")
+        print(strlang.cfg_sync_complete)
     else:
-      ip = (input("Enter ip to connect : "), 50001)
+      ip = (input(strlang.ip_input), 50001)
       connection = socket.socket()
-      print("Connecting...")
+      print(strlang.connecting)
       try:
         connection.connect(ip)
       except:
-        print("Can't connect. Try again later.\n Error: "+str(sys.exc_info()[1]))
+        print(strlang.client_error + str(sys.exc_info()[1]))
         os.system("pause")
         main_menu()
       else:
-        print("Connected!\nReceiving game configuration...")
+        print(strlang.connected)
         with open("battleships.save.tmp", mode='wb') as f:
           f.write(connection.recv(1024))
         connection.send(b'200')
-        print("Game configuration received!")
+        print(strlang.cfg_sync_complete)
 
-  print("init game...")
   size, boatnbr, caps, *_ = get_cfg()
   p1 = Player(1, boatnbr)
   if nbr_players == 2:
@@ -875,11 +903,11 @@ def init_game(net: bool, nbr_players: int):
   else:
     p2 = AI(2, boatnbr)
     while not(p2.ai_strength):
-      p2.ai_strength = menu_generator("Select the AI's difficulty", ["Dumbass", "Kinda Human", "Basic Sniper", "Godlike Sniper"], [1, 2, 3, 4])
+      p2.ai_strength = menu_generator(strlang.select_ai, strlang.ai_name, [1, 2, 3, 4])
 
   for p in [p1, p2]:
     if net and p.id == 2:
-      print("Waiting for the opponent...")
+      print(strlang.waiting)
     i = 0
     while i < boatnbr:
       if nbr_players == 2 or (nbr_players == 1 and p.id == 1): # if human's turn
@@ -904,7 +932,7 @@ def init_game(net: bool, nbr_players: int):
       for x in range(len(boat_obj.list_coordinates)):
         if boat_obj.list_coordinates[x] in p.list_coordinates:
           if nbr_players == 2 or (nbr_players == 1 and p.id == 1):
-            tk.messagebox.showerror(f"Battleships - Player {p.id}", "This boat is on another one\nYou can only place a boat in the water")
+            tk.messagebox.showerror(eval("f"+repr(strlang.player_turn)), strlang.error_boat_over)
           else:
             pass
           restart = True
@@ -953,7 +981,7 @@ def init_game(net: bool, nbr_players: int):
   hide_win(p1, p2)
   app.update_window()
   app.win.focus_set()
-  print('Starting game...')
+  print(strlang.game_start)
 
   return (p1, p2, app)
 ############################################################################################
@@ -986,13 +1014,13 @@ def game(net: bool, nbr_players: int):
       player = eval(f"p{current_player}")
       opponent = eval(f"p{int(not(current_player-1))+1}")
     app.set_player_turn(eval(f"p{current_player}"), eval(f"p{int(not(current_player-1))+1}"))
-    app.win.title(f"Battleships - Player {current_player}")
+    app.win.title(eval("f"+repr(strlang.title_current_player)))
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
-      msg = f"Player {current_player}'s turn"
+      msg = eval("f"+repr(strlang.popup_current_player))
       if not(app.net):
-        msg += "\nThe player's board will be displayed when this window will be closed"
-      popup_block(app.win, f"Battleships - Player {current_player}", msg)
+        msg += strlang.popup_current_player_add
+      popup_block(app.win, eval("f"+repr(strlang.title_current_player)), msg)
       show_win(player, opponent)
       app.update_window()
 
@@ -1001,7 +1029,7 @@ def game(net: bool, nbr_players: int):
       if app.net:
         if (app.is_host and current_player == 1) or (not(app.is_host) and current_player == 2):
           while (target := InputTarget(app)).target_coordinates in app.player.list_shots:
-            tk.messagebox.showerror(f"Battleships - Player {current_player}", "You already shot at that point !")
+            tk.messagebox.showerror(eval("f"+repr(strlang.title_current_player)), strlang.error_already_shot)
           target_type = target.var_target_type.get()
           target = target.target_coordinates
           app.connection.send(repr((target, target_type)).encode())
@@ -1012,11 +1040,11 @@ def game(net: bool, nbr_players: int):
           except BlockingIOError:
             app.update_window()
           except:
-            popup_block(app.win, "Game crashed!", sys.exc_info()[1])
+            popup_block(app.win, strlang.crashed, sys.exc_info()[1])
             raise SystemExit
       else:
         while (target := InputTarget(app)).target_coordinates in app.player.list_shots:
-          tk.messagebox.showerror(f"Battleships - Player {current_player}", "You already shot at that point !")
+          tk.messagebox.showerror(eval("f"+repr(strlang.title_current_player)), strlang.error_already_shot)
         target_type = target.var_target_type.get()
         target = target.target_coordinates
     ### END user action
@@ -1027,19 +1055,37 @@ def game(net: bool, nbr_players: int):
     ### END AI action
 
     if target_type == "Basic Ammo":
+      app.player.stats["ammo used"]["Basic Ammo"] += 1
       targets = [target]
     elif target_type == "Heavy Ammo":
+      app.player.stats["ammo used"]["Heavy Ammo"] += 1
       x_target, y_target = target
       targets = []
       for y in range(y_target-1, y_target+2):
         for x in range(x_target-1, x_target+2):
           if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
             targets += [(x, y)]
+    elif target_type == "Sonar Ammo":
+      app.player.stats["ammo used"]["Sonar Ammo"] += 1
+      x_target, y_target = target
+      probe_result = 0
+      targets = []
+      for y in range(y_target, y_target+get_cfg("probe_range")+1):
+        for x in range(x_target, x_target+get_cfg("probe_range")+1):
+          if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
+            targets += [(x, y)]
+      for boat in app.opponent.boats:
+        for target in targets:
+          if target in boat.list_coordinates:
+            probe_result += 1
+            break
+      app.player.board_opponent.highlight_tile(targets[0], targets[-1])
+      targets = []
 
     target_count = {
-      "miss": 0,
-      "hit": 0,
-      "sunk": 0
+      strlang.miss: 0,
+      strlang.hit: 0,
+      strlang.sunk: 0
     }
     app.player.stats["shots"] += 1
     for target in targets:
@@ -1058,33 +1104,39 @@ def game(net: bool, nbr_players: int):
             boat.hit( app.opponent, app.opponent.board_player, boat.list_coordinates.index(target) )
             app.player.board_opponent.draw_hit(boat.list_coordinates[boat.list_coordinates.index(target)])
 
-            target_count["hit"] += 1
-            app.player.board_player.status_var.set("HIT!")
+            target_count[strlang.hit] += 1
+            app.player.board_player.status_var.set(strlang.hit + " !")
             if boat.hp == 0:
               # if boat is fully damaged
-              target_count["sunk"] += 1
-              app.player.board_player.status_var.set("SUNK!")
+              target_count[strlang.sunk] += 1
+              app.player.board_player.status_var.set(strlang.sunk + " !")
               app.player.stats["sunk"] += 1
               app.opponent.board_player.draw_drown(boat)
               app.player.board_opponent.draw_boat(boat)
               app.player.board_opponent.draw_drown(boat)
         else:
           # if target doesn't hit a ship
-          target_count["miss"] += 1
-          app.player.board_player.status_var.set("MISS!")
+          target_count[strlang.miss] += 1
+          app.player.board_player.status_var.set(strlang.miss + " !")
           app.player.stats["miss"] += 1
           app.player.board_opponent.draw_miss(target)
           app.opponent.board_player.draw_miss(target)
 
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       app.update_window()
-      if len(targets) > 1:
-        checksum = [str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]
-        popup_block(app.win, f"Battleships - Player {current_player}", "\n".join(checksum))
-        app.player.last_status = checksum[-1][-5:-1].lower().strip()
+      
+      if target_type == "Sonar Ammo":
+        popup_block(app.win, eval("f"+repr(strlang.title_current_player)), eval("f"+repr(strlang.sonar_warn)))
+        app.player.last_status = "scan"
+
+      elif len(targets) > 1:
+        checksum = [str(target_count[x])+"x "+x.upper()+" !" for x in [strlang.miss, strlang.hit, strlang.sunk] if target_count[x] != 0]
+        popup_block(app.win, eval("f"+repr(strlang.title_current_player)), "\n".join(checksum))
+        app.player.last_status = checksum[-1].split(" ")[1].lower().strip()
+
       else:
-        popup_block(app.win, f"Battleships - Player {current_player}", app.player.board_player.status_var.get())
-        app.player.last_status = app.player.board_player.status_var.get().lower()[:-1]
+        popup_block(app.win, eval("f"+repr(strlang.title_current_player)), app.player.board_player.status_var.get().upper())
+        app.player.last_status = app.player.board_player.status_var.get().lower()[:-2]
 
       app.player.board_opponent.clear_highlight()
       if app.net:
@@ -1095,10 +1147,10 @@ def game(net: bool, nbr_players: int):
       else:
         hide_win(app.player, app.opponent)
     if len(targets) > 1:
-      checksum = [str(target_count[x])+"x "+x.upper()+"!" for x in ["miss", "hit", "sunk"] if target_count[x] != 0]
-      app.player.last_status = checksum[-1][-5:-1].lower().strip()
+      checksum = [str(target_count[x])+"x "+x.upper()+" !" for x in [strlang.miss, strlang.hit, strlang.sunk] if target_count[x] != 0]
+      app.player.last_status = checksum[-1].split(" ")[1].lower().strip()
     else:
-      app.player.last_status = app.player.board_player.status_var.get().lower()[:-1]
+      app.player.last_status = app.player.board_player.status_var.get().lower()[:-2]
 
     current_player = int(not(current_player-1))+1
 
@@ -1134,6 +1186,10 @@ def end_game(app: ApplicationClass):
   print(f"  Player 1 : ")
   print(f"    undamaged boats : {p1.hp:03}")
   print(f"    shots fired     : {p1.stats['shots']:03}")
+  print(f"    ammo used")
+  print(f"      Basic Ammo    : {p1.stats['ammo used']['Basic Ammo']:03}")
+  print(f"      Heavy Ammo    : {p1.stats['ammo used']['Heavy Ammo']:03}")
+  print(f"      Sonar Ammo    : {p1.stats['ammo used']['Sonar Ammo']:03}")
   print(f"    missed shots    : {p1.stats['miss']:03}")
   print(f"    damages done    : {p1.stats['hits']:03}")
   print(f"    boats sunk      : {p1.stats['sunk']:03}")
@@ -1143,6 +1199,10 @@ def end_game(app: ApplicationClass):
   else: print(f"  AI : ")
   print(f"    undamaged boats : {p2.hp:03}")
   print(f"    shots fired     : {p2.stats['shots']:03}")
+  print(f"    ammo used")
+  print(f"      Basic Ammo    : {p2.stats['ammo used']['Basic Ammo']:03}")
+  print(f"      Heavy Ammo    : {p2.stats['ammo used']['Heavy Ammo']:03}")
+  print(f"      Sonar Ammo    : {p2.stats['ammo used']['Sonar Ammo']:03}")
   print(f"    missed shots    : {p2.stats['miss']:03}")
   print(f"    damages done    : {p2.stats['hits']:03}")
   print(f"    boats sunk      : {p2.stats['sunk']:03}")
@@ -1153,37 +1213,24 @@ def main_menu():
   "display the game's main menu"
   while True:
     exec(menu_generator(
-      "Battleships",
-      ["Play", "Settings", "Exit"],
-      ["play()", "Config()", "raise SystemExit"], hidden={
-        "your choice":"""print("Tu te crois malin ? hmm... Tu me fais presque de la peine.");time.sleep(2)""",
-        0:"""print("Te crois-tu capable de faire bugger ce menu ? HA n'essaye même pas !");time.sleep(2)""",
-        123:"""print("Soleil !");time.sleep(2)""",
-        666:"""print("SATAN! Je t'ai fais quoi pour que tu me fasse ça !?".upper());time.sleep(2)""",
-        999:"""print("Me dit pas que t'as fait toutes les combinaisons pour arriver jusqu'ici !?");time.sleep(2)"""
-      })
-    )
+      strlang.game_title,
+      [strlang.play, strlang.settings, strlang.exit_game],
+      ["play()", "Config()", "raise SystemExit"]
+    ))
 
 def play():
   "pre-game selector"
-  net, nbr_players = menu_generator("Number of players :", ["Solo", "Local", "Wireless"], [(0, 1), (0, 2), (1, 2)])
+  net, nbr_players = menu_generator(
+    strlang.game_modes,
+    [strlang.solo, strlang.local, strlang.wireless],
+    [(0, 1), (0, 2), (1, 2)]
+  )
   game(net, nbr_players)
 
 def rules():
   "display game's rules"
   os.system("cls")
-  print("""\
-This game is a single and multiplayer game.
-
-Your goal is to sink all of your opponent's boats.
-
-To do so, you have to fire at your opponent's fleet.
-You can aim by entering the grid's coordinates. (e.g. : A1 or J10)
-After entering a valid target (a square you haven't already shot at and
-that is in the grid), you'll know if you hit a boat or miss your shot.
-
-The winner is the one that sunk all of his opponent's fleet.
-""")
+  print(strlang.rules)
   os.system("pause")
   return
 
@@ -1201,11 +1248,13 @@ def get_cfg(param=None, recovery=False):
         caps.append(eval(f.readline().rstrip("\n")))
 
       ammo = {"Basic Ammo": -1}
-      for i in ["Heavy Ammo"]:
+      for i in ["Heavy Ammo", "Sonar Ammo"]:
         ammo[i] = eval(f.readline().rstrip("\n"))
 
+      probe_range = eval(f.readline().rstrip("\n"))
+
     with open("battleships.save", mode='r') as f:
-      for i in range(len(size)+boatnbr+len(ammo)):
+      for i in range(len(size)+boatnbr+len(ammo)+1):
         f.readline()
       colors = {}
       for i in ['background', 'boat', 'grid', 'hit', 'miss', 'highlight']:
@@ -1224,7 +1273,9 @@ def get_cfg(param=None, recovery=False):
 
     assert isinstance(ammo, dict)
     for x in ammo:
-      assert isinstance(ammo[x],int)
+      assert isinstance(ammo[x], int)
+
+    assert isinstance(probe_range, int)
 
     assert isinstance(colors, dict)
     for x in colors:
@@ -1232,27 +1283,29 @@ def get_cfg(param=None, recovery=False):
 
     if param == None:
       return [size, boatnbr, caps, ammo, colors]
+    elif param == "lang":
+      return "en-gb"
     else:
       return eval(param)
   except Exception as e:
     if not(recovery):
       if type(e) == AssertionError:
-        msg = "An error occurred while saving the save file.\nA recovery protocol will be initiated.\nError: "+str(sys.exc_info()[1])
+        msg = strlang.cfg_error_save+str(sys.exc_info()[1])
       elif type(e) == FileNotFoundError:
-        msg = "No save file were found.\nA new one will be created.\nError: "+str(sys.exc_info()[1])
+        msg = strlang.cfg_error_not_found+str(sys.exc_info()[1])
       else:
-        msg = "An error occurred while reading the save file.\nA recovery protocol will be initiated.\nError: \n"+str(sys.exc_info()[1])
+        msg = strlang.cfg_error_read+str(sys.exc_info()[1])
       win = tk.Tk()
-      user = tk.messagebox.askokcancel("Configuration Error", msg)
+      user = tk.messagebox.askokcancel(strlang.cfg_error_title, msg)
       if user:
         Config(force_restore=True)
         get_cfg(recovery=True)
-        tk.messagebox.showinfo("Configuration Error", "The recovery protocol was successful !")
+        tk.messagebox.showinfo(strlang.cfg_error_title, strlang.cfg_recovery_successful)
         win.destroy()
       else:
         raise SystemExit
     else:
-      tk.messagebox.showerror("Configuration Error", "The recovery protocol was unsuccessful.\nTry retrieving the base configuration file.")
+      tk.messagebox.showerror(strlang.cfg_error_title, strlang.cfg_recovery_unsuccessful)
       raise SystemExit
 
 if __name__ == '__main__':
