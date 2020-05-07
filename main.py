@@ -138,22 +138,34 @@ class Board:
       (coordinates[0]+1)*self.scale[0], coordinates[1]*self.scale[1],
       width=self._width, fill=self.color["miss"])
 
-  def highlight_tile(self, coordinates: tuple, coordinates_2: tuple = None):
+  def highlight_tile(self, coordinates: tuple, coordinates_2: tuple = None, target: tuple = None):
     """highlight a tile on the board"""
     self.clear_highlight()
+
     if coordinates != (None, None):
+      for coord in [coordinates, coordinates_2]:
+        if coordinates[0] < 1:
+          coordinates = (1, coordinates[1])
+        elif coordinates[0] > get_cfg("size")[0]:
+          coordinates = (get_cfg("size")[0], coordinates[1])
+
+        if coordinates[1] < 1:
+          coordinates = (coordinates[0], 1)
+        elif coordinates[1] > get_cfg("size")[1]:
+          coordinates = (coordinates[0], get_cfg("size")[1])
+
       if coordinates_2 == None:
         self.rect_highlight = self.board.create_rectangle(
           coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
           (coordinates[0]+1)*self.scale[0], (coordinates[1]+1)*self.scale[1],
           width=self._width, outline=self.color["highlight"])
+        self.highlighted = coordinates
       else:
         self.rect_highlight = self.board.create_rectangle(
           coordinates[0]*self.scale[0], coordinates[1]*self.scale[1],
           (coordinates_2[0]+1)*self.scale[0], (coordinates_2[1]+1)*self.scale[1],
           width=self._width, outline=self.color["highlight"])
-
-      self.highlighted = coordinates
+        self.highlighted = target
 
   def clear_highlight(self):
     """clear the highlighted tile"""
@@ -384,6 +396,8 @@ class ApplicationClass:
     self.win.resizable(False, False)
     self.win.protocol("WM_DELETE_WINDOW", self.close)
 
+    self.highlight_range = (0, 0, 0, 0)
+
   def update_window(self):
     "update main window"
     self.win.update()
@@ -413,7 +427,12 @@ class ApplicationClass:
     else:
       show_win(self.player, self.opponent)
     self.update_window()
-    self.player.board_opponent.highlight_tile(self.player.board_opponent.get_tile_coords((event.x, event.y)))
+    highlight_coords = self.player.board_opponent.get_tile_coords((event.x, event.y))
+    if highlight_coords != (None, None):
+      if self.highlight_range == (0, 0, 0, 0):
+        self.player.board_opponent.highlight_tile((highlight_coords[0], highlight_coords[1]))
+      else:
+        self.player.board_opponent.highlight_tile((highlight_coords[0]-self.highlight_range[0], highlight_coords[1]-self.highlight_range[1]), (highlight_coords[0]+self.highlight_range[2], highlight_coords[1]+self.highlight_range[3]), highlight_coords)
 
 
 class InputCoords:
@@ -491,6 +510,7 @@ class InputCoords:
 class InputTarget:
   """Target selector addons on main window"""
   def __init__(self, app: ApplicationClass):
+    self.app = app
     self.win = app.win
     self.player = app.player
     self.target_coordinates = (None, None)
@@ -508,7 +528,7 @@ class InputTarget:
     self.var_target_type = tk.StringVar()
     self.var_target_type.set("Basic Ammo")
     for i in range(len(vals)):
-      tk.Radiobutton(target_type_frame, indicatoron=0, padx=2, pady=2, variable=self.var_target_type, text=f"{vals[i]} Shot", value=f"{vals[i]} Ammo").grid(row=i, column=0)
+      tk.Radiobutton(target_type_frame, indicatoron=0, padx=2, pady=2, variable=self.var_target_type, text=f"{vals[i]} Shot", value=f"{vals[i]} Ammo", command=self.edit_highlight_range).grid(row=i, column=0)
       if self.player.ammo[f'{vals[i]} Ammo'] > -1:
         tk.Label(target_type_frame, text=strfill(f"{self.player.ammo[f'{vals[i]} Ammo']} left", 7, before=True)).grid(row=i, column=1)
 
@@ -533,6 +553,19 @@ class InputTarget:
     else:
       self.player.ammo[self.var_target_type.get()] -= 1
       self.loop = False
+
+  def edit_highlight_range(self, event: 'tkinter event' = None):
+    bullet = self.var_target_type.get()
+    if bullet == "Basic Ammo":
+      self.app.highlight_range = (0, 0, 0, 0)
+      self.app.player.board_opponent.highlight_tile((self.player.board_opponent.highlighted[0], self.player.board_opponent.highlighted[1]))
+    elif bullet == "Heavy Ammo":
+      self.app.highlight_range = (1, 1, 1, 1)
+    elif bullet == "Sonar Ammo":
+      self.app.highlight_range = (0, 0, get_cfg("probe_range")-1, get_cfg("probe_range")-1)
+
+    if self.app.highlight_range != (0, 0, 0, 0) and self.player.board_opponent.highlighted != (None, None):
+      self.app.player.board_opponent.highlight_tile((self.player.board_opponent.highlighted[0]-self.app.highlight_range[0], self.player.board_opponent.highlighted[1]-self.app.highlight_range[1]), (self.player.board_opponent.highlighted[0]+self.app.highlight_range[2], self.player.board_opponent.highlighted[1]+self.app.highlight_range[3]), (self.player.board_opponent.highlighted[0], self.player.board_opponent.highlighted[1]))
 
 
 class Config:
@@ -696,7 +729,7 @@ class Config:
     sample.draw_hit((3, 5))
     sample.draw_drown(boat1)
     sample.draw_grid()
-    sample.highlight_tile((5, 3), (8, 6))
+    sample.highlight_tile((5, 3), (8, 6), (5, 3))
 
     sample.txt.pack()
     sample.board.pack()
@@ -1079,7 +1112,6 @@ def game(net: bool, nbr_players: int):
           if target in boat.list_coordinates:
             probe_result += 1
             break
-      app.player.board_opponent.highlight_tile(targets[0], targets[-1])
       targets = []
 
     target_count = {
