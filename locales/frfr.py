@@ -34,7 +34,7 @@ error_boat_over = "Ce bateau est sur un autre.\nUn bateau peut uniquement être 
 game_start = "Démarrage de la partie..."
 title_current_player = game_title + " - Joueur {current_player}"
 popup_current_player = "Au tour du joueur {current_player}"
-popup_current_player_add = "\nLe plateau du joueur sera affiché une fois cette fenetre fermée."
+popup_current_player_add = "\nLe plateau du joueur sera affiché une fois cette fenêtre fermée."
 error_already_shot = "Vous avez déjà tiré ici !"
 crashed = "Le jeu a planté !"
 sonar_warn = "{probe_result} bateaux sont situés dans la zone"
@@ -58,7 +58,7 @@ invalid_target = "Cible invalide.\nImpossible de tirer."
 no_ammo_left = "Vous n'avez plus de ce type de munitions.\nImpossible de tirer."
 frame_cfg_boat = "Configuration des bateaux"
 cfg_nbrboats = "Entrez le nombre de bateaux\npar équipes :"
-cfg_boat_cap = "Capacité du bateau {i+1}"
+cfg_boat_cap = "Capacité du bateau {i+1} :"
 cfg_ammo = "Configuration des munitions"
 frame_cfg_color = "Configuration des couleurs"
 light_mode = "Mode Clair"
@@ -74,3 +74,33 @@ miss = "raté"
 hit = "touché"
 sunk = "coulé"
 probe_range = "Portée du sonar"
+ammo = "Munitions {ammo_type}"
+basic = "Normales"
+heavy = "Lourdes"
+sonar = "Sonar"
+stats_recap = {
+  "header": "Statistiques : ",
+  "player": "  Joueur {p.id} : ",
+  "ai": "  Ordinateur : ",
+  "content": [
+    "    Cases non détruites  : {p.hp:03}",
+    "    Coups tirés          : {p.stats['shots']:03}",
+    "    Munitions Utilisées",
+    "      Munitions Normales   : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": basic})) +"']:03}",
+    "      Munitions Lourdes    : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": heavy})) +"']:03}",
+    "      Munitions Sonar      : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": sonar})) +"']:03}",
+    "    Tirs manqués         : {p.stats['miss']:03}",
+    "    Dégâts causés        : {p.stats['hits']:03}",
+    "    Bateaux coulés       : {p.stats['sunk']:03}"
+  ]
+}
+game_finished = "Partie terminée!"
+game_duration = "La partie a duré {str(round(end_time, 2))} secondes."
+victory = {
+  "player": "Le joueur {id} a gagné!",
+  "ai": "L'ordinateur a gagné!",
+  "draw": "Egalité!"
+}
+lang_select = "Choississez la langue du jeu :"
+restart_needed_title = "Redémarrage nécessaire"
+restart_needed_txt = "Assurez vous de fermer et rouvrir le jeu pour que tous les changements prennent effet."

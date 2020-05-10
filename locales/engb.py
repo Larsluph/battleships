@@ -58,7 +58,7 @@ invalid_target = "Target is invalid.\nUnable to fire."
 no_ammo_left = "You don't have any more ammo of this type.\nUnable to fire."
 frame_cfg_boat = "Boats Configuration"
 cfg_nbrboats = "Enter number of boats per team :"
-cfg_boat_cap = "Boat {i+1}'s capacity"
+cfg_boat_cap = "Boat {i+1}'s capacity :"
 cfg_ammo = "Ammo Configuration"
 frame_cfg_color = "Colors Configuration"
 light_mode = "Light Mode"
@@ -74,3 +74,33 @@ miss = "miss"
 hit = "hit"
 sunk = "sunk"
 probe_range = "Sonar's range"
+ammo = "{ammo_type} Ammo"
+basic = "Basic"
+heavy = "Heavy"
+sonar = "Sonar"
+stats_recap = {
+  "header": "STATS : ",
+  "player": "  Player {p.id} : ",
+  "ai": "  AI : ",
+  "content": [
+    "    Undamaged boats : {p.hp:03}",
+    "    Shots fired     : {p.stats['shots']:03}",
+    "    Ammo used",
+    "      Basic Ammo      : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": basic})) +"']:03}",
+    "      Heavy Ammo      : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": heavy})) +"']:03}",
+    "      Sonar Ammo      : {p.stats['ammo used']['"+ str(eval("f"+repr(ammo), {"ammo_type": sonar})) +"']:03}",
+    "    Missed shots    : {p.stats['miss']:03}",
+    "    Damages done    : {p.stats['hits']:03}",
+    "    Boats sunk      : {p.stats['sunk']:03}"
+  ]
+}
+game_finished = "Game over!"
+game_duration = "The game lasted {str(round(end_time, 2))} seconds."
+victory = {
+  "player": "Player {id} wins!",
+  "ai": "AI wins!",
+  "draw": "It's a draw!"
+}
+lang_select = "Choose the game's language :"
+restart_needed_title = "Restart needed"
+restart_needed_txt = "Please make sure to close and reopen the game for all changes to take effect."

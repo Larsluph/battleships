@@ -15,7 +15,9 @@ from typing import Iterable, Union
 
 from custom_module.utilities import menu_generator, strfill
 
-from locales import engb as strlang
+# from locales import engb as strlang
+with open("battleships.save", mode='r') as f:
+  exec(f"from locales import {f.readline()[:-1]} as strlang")
 
 class Board:
   """board object"""
@@ -213,9 +215,9 @@ class Player:
     self.stats = {
       "shots": 0,
       "ammo used": {
-        "Basic Ammo": 0,
-        "Heavy Ammo": 0,
-        "Sonar Ammo": 0
+        eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}): 0,
+        eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy}): 0,
+        eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar}): 0
       },
       "miss": 0,
       "hits": 0,
@@ -260,7 +262,7 @@ class AI(Player):
   def ai_easy(self, app):
     while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
       pass
-    return target, "Basic Ammo"
+    return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
   def ai_human(self, app):
     if self.target_id == 0 or app.player.last_status == strlang.sunk.lower(): # if boat not found or last sunk
@@ -272,7 +274,7 @@ class AI(Player):
         self.check = [(-1,0), (0,1), (1,0), (0,-1)] # all possible shots around base_target
       else:
         self.target_id = 0
-      return target, "Basic Ammo"
+      return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
     if self.target_id == 1: # if boat just found
       temp = self.check.pop(random.randint(0, len(self.check)-1))
@@ -288,7 +290,7 @@ class AI(Player):
           break
 
       self.target_id = 2
-      return target, "Basic Ammo"
+      return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
     if self.target_id == 2: # if boat found but rot not found
       if app.player.last_status == strlang.hit.lower():
@@ -306,7 +308,7 @@ class AI(Player):
             while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
               pass
             break
-        return target, "Basic Ammo"
+        return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
     if self.target_id == 3: # if boat found and rot found
       for boat in app.opponent.boats:
@@ -324,7 +326,7 @@ class AI(Player):
           if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == strlang.miss.lower():
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0], self.base_hit[1]+self.i)
-        return (self.base_hit[0], self.base_hit[1]+self.i), "Basic Ammo"
+        return (self.base_hit[0], self.base_hit[1]+self.i), eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
       else:
         target = (self.base_hit[0]+self.i, self.base_hit[1])
@@ -336,7 +338,7 @@ class AI(Player):
           if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == strlang.miss.lower():
             self.i = round(self.i / -abs(self.i))
           target = (self.base_hit[0]+self.i, self.base_hit[1])
-        return (self.base_hit[0]+self.i, self.base_hit[1]), "Basic Ammo"
+        return (self.base_hit[0]+self.i, self.base_hit[1]), eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
   def ai_snipe(self, app):
     if app.opponent.list_coordinates[self.target_id] == None:
@@ -356,7 +358,7 @@ class AI(Player):
       while target in self.list_shots or target == None:
         self.target_id += 1
         target = app.opponent.list_coordinates[self.target_id]
-    return target, "Basic Ammo"
+    return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
   def ai_godlike(self, app):
     if app.opponent.list_coordinates[self.target_id] == None:
@@ -376,7 +378,7 @@ class AI(Player):
       while target in self.list_shots or target == None:
         self.target_id += 1
         target = app.opponent.list_coordinates[self.target_id]
-    return target, "Basic Ammo"
+    return target, eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})
 
 
 class ApplicationClass:
@@ -510,6 +512,7 @@ class InputCoords:
 class InputTarget:
   """Target selector addons on main window"""
   def __init__(self, app: ApplicationClass):
+    app.highlight_range = (0, 0, 0, 0)
     self.app = app
     self.win = app.win
     self.player = app.player
@@ -524,14 +527,13 @@ class InputTarget:
     target_type_frame.grid_propagate(0)
     target_type_frame.grid(row=2, column=3, rowspan=4)
 
-    vals = ["Basic", "Heavy", "Sonar"]
+    vals = [strlang.basic, strlang.heavy, strlang.sonar]
     self.var_target_type = tk.StringVar()
-    self.var_target_type.set("Basic Ammo")
+    self.var_target_type.set(eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}))
     for i in range(len(vals)):
-      tk.Radiobutton(target_type_frame, indicatoron=0, padx=2, pady=2, variable=self.var_target_type, text=f"{vals[i]} Shot", value=f"{vals[i]} Ammo", command=self.edit_highlight_range).grid(row=i, column=0)
-      if self.player.ammo[f'{vals[i]} Ammo'] > -1:
-        tk.Label(target_type_frame, text=strfill(f"{self.player.ammo[f'{vals[i]} Ammo']} left", 7, before=True)).grid(row=i, column=1)
-
+      tk.Radiobutton(target_type_frame, indicatoron=0, padx=2, pady=2, variable=self.var_target_type, text=eval("f"+repr(strlang.ammo), {"ammo_type": vals[i]}), value=eval("f"+repr(strlang.ammo), {"ammo_type": vals[i]}), command=self.edit_highlight_range).grid(row=i, column=0)
+      if self.player.ammo[f'{eval("f"+repr(strlang.ammo), {"ammo_type": vals[i]})}'] > -1:
+        tk.Label(target_type_frame, text=strfill(f"{self.player.ammo[eval('f'+repr(strlang.ammo), {'ammo_type': vals[i]})]} left", 7, before=True)).grid(row=i, column=1)
     while self.loop:
       app.update_window()
     else:
@@ -556,12 +558,12 @@ class InputTarget:
 
   def edit_highlight_range(self, event: 'tkinter event' = None):
     bullet = self.var_target_type.get()
-    if bullet == "Basic Ammo":
+    if bullet == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}):
       self.app.highlight_range = (0, 0, 0, 0)
       self.app.player.board_opponent.highlight_tile((self.player.board_opponent.highlighted[0], self.player.board_opponent.highlighted[1]))
-    elif bullet == "Heavy Ammo":
+    elif bullet == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy}):
       self.app.highlight_range = (1, 1, 1, 1)
-    elif bullet == "Sonar Ammo":
+    elif bullet == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar}):
       self.app.highlight_range = (0, 0, get_cfg("probe_range")-1, get_cfg("probe_range")-1)
 
     if self.app.highlight_range != (0, 0, 0, 0) and self.player.board_opponent.highlighted != (None, None):
@@ -609,13 +611,13 @@ class Config:
     self.missiles_frame = tk.LabelFrame(self.cfg_win, text=strlang.cfg_ammo, padx=10, pady=10)
     self.missiles_frame.place(x=338, y=7)
 
-    tk.Label(self.missiles_frame, text=strfill("Basic Ammo", 15)).grid(row=0, column=0)
+    tk.Label(self.missiles_frame, text=strfill(eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}), 15)).grid(row=0, column=0)
     basic_shot = tk.StringVar()
     basic_shot.set("∞")
     tk.Entry(self.missiles_frame, textvariable=basic_shot, state='disabled', width=3, font=monospaced_font).grid(row=0, column=1)
 
     self.missiles = {}
-    self.missiles_list = ["Heavy Ammo", "Sonar Ammo"]
+    self.missiles_list = [eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy}), eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar})]
     for i in range(len(self.missiles_list)):
       lbl = tk.Label(self.missiles_frame, text=strfill(self.missiles_list[i], 15))
       lbl.grid(row=1+i, column=0)
@@ -656,6 +658,20 @@ class Config:
     self.color_lbl.grid(row=3+len(colors), column=1, columnspan=2)
 
     tk.Button(self.color_frame, text=strlang.preview, command=self.preview_board).grid(row=4+len(colors), column=1, columnspan=2)
+    ####################
+    self.langs = {
+      "English (United Kingdom)": "engb",
+      "Français (France)": "frfr"
+    }
+    choices = list(self.langs.keys())
+    self.lang = tk.StringVar(self.cfg_win)
+    self.lang.set(list(self.langs.keys())[0])
+    selected_lang = get_cfg("lang")
+    for lang in list(self.langs.items()):
+      if selected_lang in lang:
+        self.lang.set(lang[0])
+    tk.Label(self.cfg_win, text=strlang.lang_select).place(x=338, y=455)
+    tk.OptionMenu(self.cfg_win, self.lang, *choices).place(x=338, y=480)
     ####################
     tk.Button(self.cfg_win, text=strlang.confirm, command=self.save_cfg).place(x=230, y=530)
     tk.Button(self.cfg_win, text=strlang.reset, command=self.restore_cfg).place(x=325, y=530)
@@ -738,6 +754,8 @@ class Config:
 
   def save_cfg(self):
     """save all configurations in a local file"""
+    lang = self.langs[self.lang.get()]
+    restart_check = True if lang != get_cfg("lang") else False
     size = get_cfg("size")
     boatnbr = self.boatnbr_scale.get()
     caps = [cap.get() for lbl, cap in self.caps]
@@ -767,6 +785,8 @@ class Config:
       assert isinstance(x, str)
 
     with open("battleships.save", mode="w") as f:
+      f.write(f"{lang}\n")
+
       for x in size:
         f.write(f"{x}\n")
 
@@ -783,17 +803,17 @@ class Config:
       for i in range(len(colors)):
         f.write(f"{colors[i]}\n")
 
+    if restart_check:
+      tk.messagebox.showinfo(strlang.restart_needed_title, strlang.restart_needed_txt)
     self.cfg_win.destroy()
 
   def restore_cfg(self):
     """restore default configuration to a file"""
+    lang = "engb"
     size = (10, 10)
     boatnbr = 5
     caps = [2, 3, 3, 4, 5]
-    ammo = {
-      "Heavy Ammo": 0,
-      "Sonar Ammo": 0
-    }
+    ammo = [0, 0]
     probe_range = 4
     colors = {
         "background": "#61c5ff",
@@ -805,6 +825,8 @@ class Config:
       }
 
     with open("battleships.save", mode="w") as f:
+      f.write(f"{lang}\n")
+
       for x in size:
         f.write(f"{x}\n")
 
@@ -814,11 +836,11 @@ class Config:
         f.write(f"{x}\n")
 
       for x in ammo:
-        f.write(f"{ammo[x]}\n")
+        f.write(f"{x}\n")
 
       f.write(f"{probe_range}\n")
 
-      for i in colors:
+      for i in range(len(colors)):
         f.write(f"{colors[i]}\n")
 
     self.cfg_win.destroy()
@@ -1087,19 +1109,19 @@ def game(net: bool, nbr_players: int):
       target, target_type = p2.ai_turn(app)
     ### END AI action
 
-    if target_type == "Basic Ammo":
-      app.player.stats["ammo used"]["Basic Ammo"] += 1
+    if target_type == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}):
+      app.player.stats["ammo used"][eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic})] += 1
       targets = [target]
-    elif target_type == "Heavy Ammo":
-      app.player.stats["ammo used"]["Heavy Ammo"] += 1
+    elif target_type == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy}):
+      app.player.stats["ammo used"][eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy})] += 1
       x_target, y_target = target
       targets = []
       for y in range(y_target-1, y_target+2):
         for x in range(x_target-1, x_target+2):
           if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
             targets += [(x, y)]
-    elif target_type == "Sonar Ammo":
-      app.player.stats["ammo used"]["Sonar Ammo"] += 1
+    elif target_type == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar}):
+      app.player.stats["ammo used"][eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar})] += 1
       x_target, y_target = target
       probe_result = 0
       targets = []
@@ -1157,7 +1179,7 @@ def game(net: bool, nbr_players: int):
     if nbr_players == 2 or (nbr_players == 1 and current_player == 1): # if player's turn
       app.update_window()
       
-      if target_type == "Sonar Ammo":
+      if target_type == eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar}):
         popup_block(app.win, eval("f"+repr(strlang.title_current_player)), eval("f"+repr(strlang.sonar_warn)))
         app.player.last_status = "scan"
 
@@ -1204,40 +1226,25 @@ def end_game(app: ApplicationClass):
   p1, p2 = app.players
 
   end_time = time.perf_counter() - app.start_time
-  print("GAME IS FINISHED!")
-  print(f"THE GAME LASTED {str(round(end_time, 2))} SECONDS.")
+  print(strlang.game_finished)
+  print(eval("f"+repr(strlang.game_duration)))
   if p1.hp == 0 and p2.hp != 0:
-    if app.nbr_players == 2: print("PLAYER 2 WINS!")
-    else: print("AI WINS!")
+    if app.nbr_players == 2: print(eval("f"+repr(strlang.victory['player']), {"id": 2}))
+    else: print(strlang.victory["ai"])
   elif p1.hp != 0 and p2.hp == 0:
-    print("PLAYER 1 WINS!")
-  elif p1.hp == 0 and p2.hp == 0:
-    print("IT'S A DRAW!")
+    print(eval("f"+repr(strlang.victory['player']), {"id": 1}))
+  else:
+    print(strlang.victory["draw"])
 
-  print(f"STATS : ")
-  print(f"  Player 1 : ")
-  print(f"    undamaged boats : {p1.hp:03}")
-  print(f"    shots fired     : {p1.stats['shots']:03}")
-  print(f"    ammo used")
-  print(f"      Basic Ammo    : {p1.stats['ammo used']['Basic Ammo']:03}")
-  print(f"      Heavy Ammo    : {p1.stats['ammo used']['Heavy Ammo']:03}")
-  print(f"      Sonar Ammo    : {p1.stats['ammo used']['Sonar Ammo']:03}")
-  print(f"    missed shots    : {p1.stats['miss']:03}")
-  print(f"    damages done    : {p1.stats['hits']:03}")
-  print(f"    boats sunk      : {p1.stats['sunk']:03}")
-  print()
-
-  if app.nbr_players == 2: print(f"  Player 2 : ")
-  else: print(f"  AI : ")
-  print(f"    undamaged boats : {p2.hp:03}")
-  print(f"    shots fired     : {p2.stats['shots']:03}")
-  print(f"    ammo used")
-  print(f"      Basic Ammo    : {p2.stats['ammo used']['Basic Ammo']:03}")
-  print(f"      Heavy Ammo    : {p2.stats['ammo used']['Heavy Ammo']:03}")
-  print(f"      Sonar Ammo    : {p2.stats['ammo used']['Sonar Ammo']:03}")
-  print(f"    missed shots    : {p2.stats['miss']:03}")
-  print(f"    damages done    : {p2.stats['hits']:03}")
-  print(f"    boats sunk      : {p2.stats['sunk']:03}")
+  print(strlang.stats_recap["header"])
+  for p in app.players:
+    if p.id == 2 and app.nbr_players == 1:
+      print(strlang.stats_recap["ai"])
+    else:
+      print(eval("f"+repr(strlang.stats_recap["player"])))
+    for x in strlang.stats_recap["content"]:
+      print(eval("f"+repr(x)))
+    print()
 
   os.system("pause")
 
@@ -1271,6 +1278,8 @@ def get_cfg(param=None, recovery=False):
   filename = "battleships.save.tmp" if os.path.exists("battleships.save.tmp") else "battleships.save"
   try:
     with open(filename, mode="r") as f:
+      lang = f.readline().rstrip("\n")
+
       size = eval(f.readline().rstrip("\n")), eval(f.readline().rstrip("\n"))
 
       boatnbr = eval(f.readline().rstrip("\n"))
@@ -1279,14 +1288,14 @@ def get_cfg(param=None, recovery=False):
       for i in range(boatnbr):
         caps.append(eval(f.readline().rstrip("\n")))
 
-      ammo = {"Basic Ammo": -1}
-      for i in ["Heavy Ammo", "Sonar Ammo"]:
+      ammo = {eval("f"+repr(strlang.ammo), {"ammo_type": strlang.basic}): -1}
+      for i in [eval("f"+repr(strlang.ammo), {"ammo_type": strlang.heavy}), eval("f"+repr(strlang.ammo), {"ammo_type": strlang.sonar})]:
         ammo[i] = eval(f.readline().rstrip("\n"))
 
       probe_range = eval(f.readline().rstrip("\n"))
 
     with open("battleships.save", mode='r') as f:
-      for i in range(len(size)+boatnbr+len(ammo)+1):
+      for i in range(len(size)+boatnbr+len(ammo)+2):
         f.readline()
       colors = {}
       for i in ['background', 'boat', 'grid', 'hit', 'miss', 'highlight']:
@@ -1315,8 +1324,6 @@ def get_cfg(param=None, recovery=False):
 
     if param == None:
       return [size, boatnbr, caps, ammo, colors]
-    elif param == "lang":
-      return "en-gb"
     else:
       return eval(param)
   except Exception as e:
