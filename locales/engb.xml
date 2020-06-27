@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<strings>
+    <rules>This game is a single and multiplayer game.\n\nYour goal is to sink all of your opponent's boats.\n\nTo do so, you have to fire at your opponent's fleet.\nYou can aim by clicking on a grid's tile.\nAfter selecting a valid target (a square you haven't already shot at and\nthat is in the grid), you'll know if you hit a boat or miss your shot.\n\nThe winner is the one that sunk all of his opponent's fleet.</rules>
+    <cfg_error_title>Configuration Error</cfg_error_title>
+    <cfg_error_save>An error occurred while saving the save file.\nA recovery protocol will be initiated.\nError: </cfg_error_save>
+    <cfg_error_not_found>No save file were found.\nA new one will be created.\nError: </cfg_error_not_found>
+    <cfg_error_read>An error occurred while reading the save file.\nA recovery protocol will be initiated.\nError: </cfg_error_read>
+    <cfg_recovery_successful>The recovery protocol was successful !</cfg_recovery_successful>
+    <cfg_recovery_unsuccessful>The recovery protocol was unsuccessful.\nTry retrieving the base configuration file.</cfg_recovery_unsuccessful>
+    <game_modes>Game modes :</game_modes>
+    <solo>Solo</solo>
+    <local>Local</local>
+    <wireless>Wireless</wireless>
+    <game_title>Battleships</game_title>
+    <play>Play</play>
+    <settings>Settings</settings>
+    <exit_game>Exit</exit_game>
+    <ask_host>What do you want to do ?</ask_host>
+    <host>Host</host>
+    <join>Join</join>
+    <server_binded>Server binded\nWaiting for a connection...</server_binded>
+    <server_error>Can't create server. Try again later.\n Error: </server_error>
+    <ip_input>Enter ip to connect : </ip_input>
+    <connecting>Connecting...</connecting>
+    <client_error>Can't connect. Try again later.\n Error: </client_error>
+    <connected>Connected!\nSyncronizing game configuration...</connected>
+    <cfg_sync_complete>Game configuration syncronized!</cfg_sync_complete>
+    <select_ai>Select the AI's difficulty</select_ai>
+    <ai_name>["Dumbass", "Kinda Human", "Basic Sniper", "Godlike Sniper"]</ai_name>
+    <waiting>Waiting for the opponent...</waiting>
+    <player_turn>{game_title} - Player {p.id}</player_turn>
+    <error_boat_over>This boat is on another one\nYou can only place a boat in the water</error_boat_over>
+    <game_start>Starting game...</game_start>
+    <title_current_player>{game_title} - Player {current_player}</title_current_player>
+    <popup_current_player>Player {current_player}'s turn</popup_current_player>
+    <popup_current_player_add>\nThe player's board will be displayed when this window will be closed.</popup_current_player_add>
+    <error_already_shot>You already shot at that point !</error_already_shot>
+    <crashed>Game crashed!</crashed>
+    <sonar_warn>{probe_result} boats are located in the highlighted area</sonar_warn>
+    <player_playboard>Your Playboard</player_playboard>
+    <opponent_playboard>Enemy's Playboard</opponent_playboard>
+    <error_exit>Action cancelled by user. Exiting to main menu...</error_exit>
+    <place_boat>Player {player_nbr} - Place Boat {boat_id}</place_boat>
+    <boat_capacity>boat's capacity :</boat_capacity>
+    <x_boat>Enter the x position of the boat :</x_boat>
+    <y_boat>Enter the y position of the boat :</y_boat>
+    <rot_boat>Choose the boat's rotation :</rot_boat>
+    <horizontal>Horizontal</horizontal>
+    <vertical>Vertical</vertical>
+    <confirm>Confirm!</confirm>
+    <reset>Reset</reset>
+    <warning>Warning</warning>
+    <error_boat_fit>The boat must fit in the grid!</error_boat_fit>
+    <fire>Fire !</fire>
+    <frame_target>Ammo Selection</frame_target>
+    <invalid_target>Target is invalid.\nUnable to fire.</invalid_target>
+    <no_ammo_left>You don't have any more ammo of this type.\nUnable to fire.</no_ammo_left>
+    <frame_cfg_boat>Boats Configuration</frame_cfg_boat>
+    <cfg_nbrboats>Enter number of boats per team :</cfg_nbrboats>
+    <cfg_boat_cap>Boat {i+1}'s capacity :</cfg_boat_cap>
+    <cfg_ammo>Ammo Configuration</cfg_ammo>
+    <frame_cfg_color>Colors Configuration</frame_cfg_color>
+    <light_mode>Light Mode</light_mode>
+    <night_mode>Night Mode</night_mode>
+    <user_color>User Defined</user_color>
+    <color_picker_util>Color picker utility</color_picker_util>
+    <preview>Preview Board</preview>
+    <invalid>Invalid</invalid>
+    <save>Save</save>
+    <save_ask>Do you want to save changes ?</save_ask>
+    <ok>Ok</ok>
+    <miss>miss</miss>
+    <hit>hit</hit>
+    <sunk>sunk</sunk>
+    <probe_range>Sonar's range</probe_range>
+    <ammo>{ammo_type} Ammo</ammo>
+    <ammo_type>
+      <basic>Basic</basic>
+      <heavy>Heavy</heavy>
+      <sonar>Sonar</sonar>
+    </ammo_type>
+    <stats_recap>
+      <header>STATS : </header>
+      <player>  Player {p.id} : </player>
+      <ai>  AI : </ai>
+      <content>    Undamaged boats : {p.hp:03}\n    Shots fired     : {p.stats['shots']:03}\n    Ammo used\n      Basic Ammo      : {p.stats['ammo used']['Basic Ammo']:03}\n      Heavy Ammo      : {p.stats['ammo used']['Heavy Ammo']:03}\n      Sonar Ammo      : {p.stats['ammo used']['Sonar Ammo']:03}\n    Missed shots    : {p.stats['miss']:03}\n    Damages done    : {p.stats['hits']:03}\n    Boats sunk      : {p.stats['sunk']:03}</content>
+    </stats_recap>
+    <game_finished>Game over!</game_finished>
+    <game_duration>The game lasted {end_time} seconds.</game_duration>
+    <victory>
+      <player>Player {id} wins!</player>
+      <ai>AI wins!</ai>
+      <draw>It's a draw!</draw>
+    </victory>
+    <lang_select>Choose the game's language :</lang_select>
+</strings>

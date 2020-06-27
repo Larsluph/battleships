@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<strings>
+    <rules>Ce jeu se joue à 1 ou 2 joueurs.\n\nVotre but est de couler tout les bateaux de votre adversaire.\n\nPour cela, vous devez tirer sur la flotte adverse.\nVous pouvez viser en tirant sur une case de la grille.\nAprès avoir selectionné une cible valide (une case où vous\nn'avez pas encore tiré et qui est sur la grille), vous\nsaurez si votre tir a touché un bateau.\n\nLe gagnant est celui qui coule toute la flotte adverse.</rules>
+    <cfg_error_title>Erreur dans la configuration</cfg_error_title>
+    <cfg_error_save>Une erreur est survenue en enregistrant le fichier de sauvegarde.\nUn protocol de récupération va être initié.\nErreur: </cfg_error_save>
+    <cfg_error_not_found>Aucun fichier de sauvegarde n'a été trouvé.\nUn nouveau va être créé.\nErreur: </cfg_error_not_found>
+    <cfg_error_read>Une erreur est survenue en lisant le fichier de sauvegarde.\nUn protocol de récupération va être initié.\nErreur: </cfg_error_read>
+    <cfg_recovery_successful>Le protocol de récupération a réussi !</cfg_recovery_successful>
+    <cfg_recovery_unsuccessful>Le protocol de récupération a échoué.\nEssayez de réinstaller le fichier de configuration de base.</cfg_recovery_unsuccessful>
+    <game_modes>Modes de jeux :</game_modes>
+    <solo>Solo</solo>
+    <local>Multijoueur Local</local>
+    <wireless>Multijoueur Sans-fil</wireless>
+    <game_title>Bataille Navale</game_title>
+    <play>Jouer</play>
+    <settings>Paramètres</settings>
+    <exit_game>Quitter</exit_game>
+    <ask_host>Que voulez-vous faire ?</ask_host>
+    <host>Héberger</host>
+    <join>Rejoindre</join>
+    <server_binded>Serveur lié\nEn attente d'une connection...</server_binded>
+    <server_error>Impossible de créer le serveur. Réessayez ultérieurement.\n Erreur: </server_error>
+    <ip_input>Entrer l'ip de connexion : </ip_input>
+    <connecting>Connexion en cours...</connecting>
+    <client_error>Impossible de se connecter. Réessayez ultérieurement.\n Erreur: </client_error>
+    <connected>Connecté!\nSynchronisation des paramètres de jeu...</connected>
+    <cfg_sync_complete>Paramètres de jeu synchronisés !</cfg_sync_complete>
+    <select_ai>Selectionnez la difficulté de l'ordinateur</select_ai>
+    <ai_name>["Facile", "Normal", "Difficile", "Extrême"]</ai_name>
+    <waiting>En attente de l'adversaire...</waiting>
+    <player_turn>{game_title} - Joueur {p.id}</player_turn>
+    <error_boat_over>Ce bateau est sur un autre.\nUn bateau peut uniquement être placé sur l'eau</error_boat_over>
+    <game_start>Démarrage de la partie...</game_start>
+    <title_current_player>{game_title} - Joueur {current_player}</title_current_player>
+    <popup_current_player>Au tour du joueur {current_player}</popup_current_player>
+    <popup_current_player_add>\nLe plateau du joueur sera affiché une fois cette fenêtre fermée.</popup_current_player_add>
+    <error_already_shot>Vous avez déjà tiré ici !</error_already_shot>
+    <crashed>Le jeu a planté !</crashed>
+    <sonar_warn>{probe_result} bateaux sont situés dans la zone</sonar_warn>
+    <player_playboard>Votre plateau de jeu</player_playboard>
+    <opponent_playboard>La plateau de votre adversaire</opponent_playboard>
+    <error_exit>Action annulée par l'utilisateur. Retour au menu principal...</error_exit>
+    <place_boat>Joueur {player_nbr} - Bateau n°{boat_id}</place_boat>
+    <boat_capacity>Capacité du bateau :</boat_capacity>
+    <x_boat>Entrez la position x du bateau :</x_boat>
+    <y_boat>Entrez la position y du bateau :</y_boat>
+    <rot_boat>Choississez la rotation du bateau :</rot_boat>
+    <horizontal>Horizontal</horizontal>
+    <vertical>Vertical</vertical>
+    <confirm>Confirmer !</confirm>
+    <reset>Réinitialiser</reset>
+    <warning>Avertissement</warning>
+    <error_boat_fit>Le bateau doit rentrer sur la grille !</error_boat_fit>
+    <fire>Tirer !</fire>
+    <frame_target>Selection des munitions</frame_target>
+    <invalid_target>Cible invalide.\nImpossible de tirer.</invalid_target>
+    <no_ammo_left>Vous n'avez plus de ce type de munitions.\nImpossible de tirer.</no_ammo_left>
+    <frame_cfg_boat>Configuration des bateaux</frame_cfg_boat>
+    <cfg_nbrboats>Entrez le nombre de bateaux\npar équipes :</cfg_nbrboats>
+    <cfg_boat_cap>Capacité du bateau {i+1} :</cfg_boat_cap>
+    <cfg_ammo>Configuration des munitions</cfg_ammo>
+    <frame_cfg_color>Configuration des couleurs</frame_cfg_color>
+    <light_mode>Mode Clair</light_mode>
+    <night_mode>Mode Sombre</night_mode>
+    <user_color>Utilisateur</user_color>
+    <color_picker_util>Outil de selection des couleurs</color_picker_util>
+    <preview>Aperçu de la grille</preview>
+    <invalid>Invalide</invalid>
+    <save>Enregistrer</save>
+    <save_ask>Voulez-vous enregistrer les modifications ?</save_ask>
+    <ok>Ok</ok>
+    <miss>manqué</miss>
+    <hit>touché</hit>
+    <sunk>coulé</sunk>
+    <probe_range>Portée du sonar</probe_range>
+    <ammo>Munitions {ammo_type}</ammo>
+    <ammo_type>
+      <basic>Normales</basic>
+      <heavy>Lourdes</heavy>
+      <sonar>Sonar</sonar>
+    </ammo_type>
+    <stats_recap>
+      <header>Statistiques : </header>
+      <player>  Joueur {p.id} : </player>
+      <ai>  Ordinateur : </ai>
+      <content>    Cases non détruites  : {p.hp:03}\n    Coups tirés          : {p.stats['shots']:03}\n    Munitions Utilisées\n      Munitions Normales   : {p.stats['ammo used']['Munitions Normales']:03}\n      Munitions Lourdes    : {p.stats['ammo used']['Munitions Lourdes']:03}\n      Munitions Sonar      : {p.stats['ammo used']['Munitions Sonar']:03}\n    Tirs manqués         : {p.stats['miss']:03}\n    Dégâts causés        : {p.stats['hits']:03}\n    Bateaux coulés       : {p.stats['sunk']:03}</content>
+    </stats_recap>
+    <game_finished>Partie terminée!</game_finished>
+    <game_duration>La partie a duré {str(round(end_time, 2))} secondes.</game_duration>
+    <victory>
+      <player>Le joueur {id} a gagné!</player>
+      <ai>L'ordinateur a gagné!</ai>
+      <draw>Egalité!</draw>
+    </victory>
+    <lang_select>Choississez la langue du jeu :</lang_select>
+</strings>

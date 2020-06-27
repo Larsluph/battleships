@@ -9,3 +9,4 @@ test/
 *.pyc
 *.spec
 battleships.save
+*test*
