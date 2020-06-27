@@ -1,4 +1,4 @@
-pyinstaller -F --distpath .\compiled main.py
+pyinstaller -F -i icon.ico --distpath .\compiled main.py
 
 rmdir /S /Q build
 rmdir /S /Q __pycache__
