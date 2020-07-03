@@ -2,8 +2,9 @@ __pycache__/
 .vscode/
 build/
 compiled/
-venv/
+releases/
 test/
+venv/
 
 *.json
 *.pyc
