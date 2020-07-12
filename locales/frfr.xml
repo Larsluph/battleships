@@ -40,11 +40,9 @@
     <player_playboard>Votre plateau de jeu</player_playboard>
     <opponent_playboard>La plateau de votre adversaire</opponent_playboard>
     <error_exit>Action annulée par l'utilisateur. Retour au menu principal...</error_exit>
-    <place_boat>Joueur {player_nbr} - Bateau n°{boat_id}</place_boat>
-    <boat_capacity>Capacité du bateau :</boat_capacity>
-    <x_boat>Entrez la position x du bateau :</x_boat>
-    <y_boat>Entrez la position y du bateau :</y_boat>
-    <rot_boat>Choississez la rotation du bateau :</rot_boat>
+    <title_input>Joueur {player_nbr} - Bateau n°{boat_id}</title_input>
+    <boat_input_intro>Clique sur la grille pour placer le bateau\nClique droit pour le tourner</boat_input_intro>
+    <boat_capacity>La capacité du bateau actuel est {capacity}</boat_capacity>
     <horizontal>Horizontal</horizontal>
     <vertical>Vertical</vertical>
     <confirm>Confirmer !</confirm>

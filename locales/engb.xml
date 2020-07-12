@@ -40,11 +40,9 @@
     <player_playboard>Your Playboard</player_playboard>
     <opponent_playboard>Enemy's Playboard</opponent_playboard>
     <error_exit>Action cancelled by user. Exiting to main menu...</error_exit>
-    <place_boat>Player {player_nbr} - Place Boat {boat_id}</place_boat>
-    <boat_capacity>boat's capacity :</boat_capacity>
-    <x_boat>Enter the x position of the boat :</x_boat>
-    <y_boat>Enter the y position of the boat :</y_boat>
-    <rot_boat>Choose the boat's rotation :</rot_boat>
+    <title_input>Player {player_nbr} - Place Boat {boat_id}</title_input>
+    <boat_input_intro>Click on the board to place the boat\nRight Click to rotate it</boat_input_intro>
+    <boat_capacity>The current boat's capacity is {capacity}</boat_capacity>
     <horizontal>Horizontal</horizontal>
     <vertical>Vertical</vertical>
     <confirm>Confirm!</confirm>
