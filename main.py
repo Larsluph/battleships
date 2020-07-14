@@ -14,6 +14,7 @@ import tkinter.messagebox
 import xml.etree.ElementTree as et
 from typing import Iterable, Union
 
+import numpy as np
 from custom_module.utilities import menu_generator, strfill
 
 
@@ -28,8 +29,12 @@ class Board:
         self.color = get_cfg(param='colors') if colors == None else colors
         self.width = 5
 
-        self.rect_highlight = None  # placeholder for the highlight rectangle on the canvas
-        self.last_boat = None  # placeholder (for InputCoords only)
+        self.map = np.zeros((self.size[0]+1, self.size[1]+1), dtype=np.int8)
+
+        # placeholder for the highlight rectangle on the canvas
+        self.rect_highlight = None
+        # placeholder (for InputCoords only)
+        self.last_boat = None
         # stores last shot's status ('hit' / 'sunk' / 'miss')
         self.status_var = tk.StringVar(value='{dmg_status}')
         # stores the highlighted tile's coordinates
@@ -49,10 +54,10 @@ class Board:
         if player:
             self.txt = tk.Label(win, text=self.txt)
 
-        self.board = tk.Canvas(win, height=(self.size[0]+1)*self.scale[1], width=(
-            self.size[1]+1)*self.scale[0], bg=self.color["background"])
-
-        return
+        self.board = tk.Canvas(win,
+                               height=(self.size[0] + 1)*self.scale[1],
+                               width=(self.size[1] + 1)*self.scale[0],
+                               bg=self.color["background"])
 
     def get_tile_coords(self, coordinates: tuple):
         """return (x, y) from the canvas' coordinates or (None, None) if it isn't a valid tile"""
@@ -72,52 +77,68 @@ class Board:
 
     def draw_grid(self):
         """draw the canvas' grid"""
-        self.board.create_line(self.scale[0], 3, (self.size[0]+1) *
-                               self.scale[0], 3, width=self.width, fill=self.color["grid"])
-        self.board.create_line(
-            3, self.scale[1], 3, (self.size[1]+1)*self.scale[1], width=self.width, fill=self.color["grid"])
+        self.board.create_line(self.scale[0], self.width,
+                               (self.size[0]+1)*self.scale[0], self.width,
+                               width=self.width, fill=self.color["grid"])
 
+        self.board.create_line(self.width, self.scale[1],
+                               self.width, (self.size[1] + 1)*self.scale[1],
+                               width=self.width, fill=self.color["grid"])
+
+        # draw x lines
         i = self.scale[0]
         while i <= (self.size[0]+1)*self.scale[0]:
-            self.board.create_line(
-                0, i, (self.size[0]+1)*self.scale[0], i, width=self.width, fill=self.color["grid"])  # draw x lines
+            self.board.create_line(0, i,
+                                   (self.size[0] + 1)*self.scale[0], i,
+                                   width=self.width, fill=self.color["grid"])
             i += self.scale[0]
 
+        # draw y lines
         i = self.scale[1]
         while i <= (self.size[1]+1)*self.scale[1]:
-            self.board.create_line(
-                i, 0, i, (self.size[1]+1)*self.scale[1], width=self.width, fill=self.color["grid"])  # draw y lines
+            self.board.create_line(i, 0,
+                                   i, (self.size[1] + 1)*self.scale[1],
+                                   width=self.width, fill=self.color["grid"])
             i += self.scale[1]
 
         for x in range(self.size[0]):
-            self.board.create_text(
-                ((self.scale[0]*x)+(self.scale[0]*1.5), self.scale[1]/2), text=str(x+1), font=self.grid_font)
+            self.board.create_text((self.scale[0]*x + self.scale[0]*1.5, self.scale[1]/2),
+                                   text=str(x + 1), font=self.grid_font)
+            self.map[x, 0] = x
+        else:
+            self.map[x+1, 0] = x+1
 
         letter = list(string.ascii_uppercase)
         for y in range(self.size[1]):
-            self.board.create_text(
-                (self.scale[0]/2, (self.scale[1]*y)+(self.scale[1]*1.5)), text=letter[y], font=self.grid_font)
+            self.board.create_text((self.scale[0]/2, self.scale[1]*y + self.scale[1]*1.5),
+                                   text=letter[y], font=self.grid_font)
+            self.map[0, y] = y
+        else:
+            self.map[0, y+1] = y+1
 
     def draw_boat(self, boat: "Boat"):
         """draw a boat on the canvas"""
-        if boat.base_coordinates[2] == 0:
+        cap = boat.capacity
+        x, y, rot = boat.base_coordinates
+        if not(rot):
             # if boat's rotation is horizontal
             self.last_boat = self.board.create_oval(
-                boat.base_coordinates[0] *
-                self.scale[0], boat.base_coordinates[1]*self.scale[1],
-                (boat.base_coordinates[0]*self.scale[0])+(boat.capacity*self.scale[0]
-                                                          ), (boat.base_coordinates[1]*self.scale[1])+self.scale[1],
-                outline=self.color["boat"], fill=self.color["boat"], width=1
-            )
+                x*self.scale[0],
+                y*self.scale[1],
+                x*self.scale[0] + cap*self.scale[0],
+                y*self.scale[1] + self.scale[1],
+                outline=self.color["boat"], fill=self.color["boat"], width=1)
         else:
             # if boat's rotation is vertical
             self.last_boat = self.board.create_oval(
-                boat.base_coordinates[0] *
-                self.scale[0], boat.base_coordinates[1]*self.scale[1],
-                (boat.base_coordinates[0]*self.scale[0])+self.scale[0], (
-                    boat.base_coordinates[1]*self.scale[1])+(boat.capacity*self.scale[1]),
-                outline=self.color["boat"], fill=self.color["boat"], width=1
-            )
+                x*self.scale[0],
+                y*self.scale[1],
+                x*self.scale[0] + self.scale[0],
+                y*self.scale[1] + cap*self.scale[1],
+                outline=self.color["boat"], fill=self.color["boat"], width=1)
+
+        for coords in boat.list_coordinates:
+            self.map[coords[0], coords[1]] = 1
 
     def draw_hit(self, coordinates: tuple):
         """draw a hit on the canvas"""
@@ -126,45 +147,36 @@ class Board:
             (coordinates[0]+1)*self.scale[0], coordinates[1]*self.scale[1],
             width=self.width, fill=self.color["hit"]
         )
+        self.map[coordinates[0], coordinates[1]] = 2
 
     def draw_drown(self, boat: "Boat"):
         """draw a drown boat"""
-        if not(boat.base_coordinates[2]):
+        cap = boat.capacity
+        x, y, rot = boat.base_coordinates
+        if not(rot):
             # if boat's rotation is horizontal
-            for x in range(boat.capacity):
+            for i in range(cap):
                 self.board.create_line(
-                    (boat.base_coordinates[0]+x) *
-                    self.scale[0], (boat.base_coordinates[1])*self.scale[1],
-                    (boat.base_coordinates[0]+x+1) *
-                    self.scale[0], (boat.base_coordinates[1]+1)*self.scale[1],
-                    width=self.width, fill=self.color["hit"]
-                )
+                    (x+i) * self.scale[0], y * self.scale[1],
+                    (x+i+1) * self.scale[0], (y+1) * self.scale[1],
+                    width=self.width, fill=self.color["hit"])
                 self.board.create_line(
-                    (boat.base_coordinates[0]+x) *
-                    self.scale[0], (boat.base_coordinates[1]+1)*self.scale[1],
-                    (boat.base_coordinates[0]+x+1) *
-                    self.scale[0], (boat.base_coordinates[1])*self.scale[1],
-                    width=self.width, fill=self.color["hit"]
-                )
+                    (x+i) * self.scale[0], (y+1) * self.scale[1],
+                    (x+i+1) * self.scale[0], y * self.scale[1],
+                    width=self.width, fill=self.color["hit"])
+                self.map[x+i, y] = 3
         else:
             # if boat's rotation is vertical
-            for x in range(boat.capacity):
+            for i in range(cap):
                 self.board.create_line(
-                    (boat.base_coordinates[0]) *
-                    self.scale[0], (boat.base_coordinates[1]+x)*self.scale[1],
-                    (boat.base_coordinates[0]+1) *
-                    self.scale[0], (boat.base_coordinates[1] +
-                                    x+1)*self.scale[1],
-                    width=self.width, fill=self.color["hit"]
-                )
+                    x * self.scale[0], (y+i) * self.scale[1],
+                    (x+1) * self.scale[0], (y+i+1) * self.scale[1],
+                    width=self.width, fill=self.color["hit"])
                 self.board.create_line(
-                    (boat.base_coordinates[0]+1) *
-                    self.scale[0], (boat.base_coordinates[1]+x)*self.scale[1],
-                    (boat.base_coordinates[0]) *
-                    self.scale[0], (boat.base_coordinates[1] +
-                                    x+1)*self.scale[1],
-                    width=self.width, fill=self.color["hit"]
-                )
+                    (x+1) * self.scale[0], (y+i) * self.scale[1],
+                    x * self.scale[0], (y+i+1) * self.scale[1],
+                    width=self.width, fill=self.color["hit"])
+                self.map[x, y+i] = 3
 
     def draw_miss(self, coordinates: tuple):
         """draw a missed shot"""
@@ -178,6 +190,7 @@ class Board:
             (coordinates[0]+1)*self.scale[0], coordinates[1]*self.scale[1],
             width=self.width, fill=self.color["miss"]
         )
+        self.map[coordinates[0], coordinates[1]] = -1
 
     def highlight_tile(self, coordinates: tuple, coordinates_2: tuple = None, target: tuple = None):
         """highlight a tile on the board"""
@@ -762,7 +775,7 @@ class Config:
         tk.Label(self.missiles_frame, text=strfill(get_str(
             "ammo", ammo_type=get_str("ammo_type/basic")), 15)).grid(row=0, column=0)
         basic_shot = tk.StringVar()
-        basic_shot.set("∞")
+        basic_shot.set(u"\u221E")
         tk.Entry(self.missiles_frame, textvariable=basic_shot, state='disabled',
                  width=3, font=monospaced_font).grid(row=0, column=1)
 
@@ -822,7 +835,7 @@ class Config:
         ####################
         self.langs = {
             "English (United Kingdom)": "engb",
-            "Français (France)": "frfr"
+            "Fran"+u"\u00E7"+"ais (France)": "frfr"
         }
         choices = list(self.langs.keys())
         self.lang = tk.StringVar(self.cfg_win)

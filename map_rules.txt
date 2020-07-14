@@ -1,0 +1,5 @@
+-1 = miss
+0 = empty and not targeted
+1 = undamaged boat
+2 = damaged boat
+3 = drown boat
