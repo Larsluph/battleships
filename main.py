@@ -15,7 +15,7 @@ import xml.etree.ElementTree as et
 from typing import Iterable, Union
 
 import numpy as np
-from custom_module.utilities import menu_generator, strfill
+from larsmod.utilities import menu_generator, strfill
 
 
 class Board:
@@ -26,7 +26,7 @@ class Board:
         # store the length of a tile
         self.scale = (500/self.size[0], 500/self.size[1])
         # stores board's colors in a dict
-        self.color = get_cfg(param='colors') if colors == None else colors
+        self.color = get_cfg('colors') if colors == None else colors
         self.width = 5
 
         self.map = np.zeros((self.size[0]+1, self.size[1]+1), dtype=np.int8)
@@ -199,13 +199,13 @@ class Board:
         if coordinates != (None, None):
             if coordinates[0] < 1:
                 coordinates = (1, coordinates[1])
-            elif coordinates[0] > get_cfg("size")[0]:
-                coordinates = (get_cfg("size")[0], coordinates[1])
+            elif coordinates[0] > self.size[0]:
+                coordinates = (self.size[0], coordinates[1])
 
             if coordinates[1] < 1:
                 coordinates = (coordinates[0], 1)
-            elif coordinates[1] > get_cfg("size")[1]:
-                coordinates = (coordinates[0], get_cfg("size")[1])
+            elif coordinates[1] > self.size[1]:
+                coordinates = (coordinates[0], self.size[1])
 
             if coordinates_2 == None:
                 self.rect_highlight = self.board.create_rectangle(
@@ -321,7 +321,7 @@ class AI(Player):
             return self.ai_godlike(app)
 
     def ai_easy(self, app):
-        while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+        while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots:
             pass
         return target, get_str("ammo", ammo_type=get_str("ammo_type/basic"))
 
@@ -329,7 +329,7 @@ class AI(Player):
         # if boat not found or last sunk
         if self.target_id == 0 or app.player.last_status == get_str("sunk").lower():
             # random shot
-            while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+            while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots:
                 pass
             if target in app.opponent.list_coordinates:  # if boat is found
                 self.target_id = 1
@@ -344,13 +344,13 @@ class AI(Player):
             temp = self.check.pop(random.randint(0, len(self.check)-1))
             target = (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])
 
-            while not(1 <= target[0] <= get_cfg("size")[0] and 1 <= target[1] <= get_cfg("size")[1]) or target in self.list_shots:
+            while not(1 <= target[0] <= self.board_opponent.size[0] and 1 <= target[1] <= self.board_opponent.size[1]) or target in self.list_shots:
                 temp = self.check.pop(random.randint(0, len(self.check)-1))
                 target = (self.base_hit[0] + temp[0],
                           self.base_hit[1] + temp[1])
                 if len(self.check) == 0:
                     self.target_id = 0
-                    while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+                    while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots:
                         pass
                     break
 
@@ -366,13 +366,13 @@ class AI(Player):
                 temp = self.check.pop(random.randint(0, len(self.check)-1))
                 target = (self.base_hit[0] + temp[0],
                           self.base_hit[1] + temp[1])
-                while (target := (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])) in self.list_shots or not(1 <= target[0] <= get_cfg("size")[0] and 1 <= target[1] <= get_cfg("size")[1]):
+                while (target := (self.base_hit[0] + temp[0], self.base_hit[1] + temp[1])) in self.list_shots or not(1 <= target[0] <= self.board_opponent.size[0] and 1 <= target[1] <= self.board_opponent.size[1]):
                     temp = self.check.pop(random.randint(0, len(self.check)-1))
                     target = (self.base_hit[0] + temp[0],
                               self.base_hit[1] + temp[1])
                     if len(self.check) == 0:
                         self.target_id = 0
-                        while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots:
+                        while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots:
                             pass
                         break
                 return target, get_str("ammo", ammo_type=get_str("ammo_type/basic"))
@@ -385,24 +385,24 @@ class AI(Player):
             rot = boat.base_coordinates[2]
             if rot:
                 target = (self.base_hit[0], self.base_hit[1]+self.i)
-                while target in self.list_shots or not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]):
+                while target in self.list_shots or not(1 <= self.base_hit[1]+self.i <= self.board_opponent.size[1]):
                     if self.i < 0:
                         self.i -= 1
                     else:
                         self.i += 1
-                    if not(1 <= self.base_hit[1]+self.i <= get_cfg("size")[1]) or app.player.last_status == get_str("miss").lower():
+                    if not(1 <= self.base_hit[1]+self.i <= self.board_opponent.size[1]) or app.player.last_status == get_str("miss").lower():
                         self.i = round(self.i / -abs(self.i))
                     target = (self.base_hit[0], self.base_hit[1]+self.i)
                 return (self.base_hit[0], self.base_hit[1]+self.i), get_str("ammo", ammo_type=get_str("ammo_type/basic"))
 
             else:
                 target = (self.base_hit[0]+self.i, self.base_hit[1])
-                while target in self.list_shots or not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]):
+                while target in self.list_shots or not(1 <= self.base_hit[0]+self.i <= self.board_opponent.size[0]):
                     if self.i < 0:
                         self.i -= 1
                     else:
                         self.i += 1
-                    if not(1 <= self.base_hit[0]+self.i <= get_cfg("size")[0]) or app.player.last_status == get_str("miss").lower():
+                    if not(1 <= self.base_hit[0]+self.i <= self.board_opponent.size[0]) or app.player.last_status == get_str("miss").lower():
                         self.i = round(self.i / -abs(self.i))
                     target = (self.base_hit[0]+self.i, self.base_hit[1])
                 return (self.base_hit[0]+self.i, self.base_hit[1]), get_str("ammo", ammo_type=get_str("ammo_type/basic"))
@@ -417,7 +417,7 @@ class AI(Player):
                     self.target_id += 1
                     target = app.opponent.list_coordinates[self.target_id]
             else:
-                while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots or target == None:
+                while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots or target == None:
                     pass
         else:
             self.target_id += 1
@@ -437,7 +437,7 @@ class AI(Player):
                     self.target_id += 1
                     target = app.opponent.list_coordinates[self.target_id]
             else:
-                while (target := (random.randint(1, get_cfg("size")[0]), random.randint(1, get_cfg("size")[1]))) in self.list_shots or target == None:
+                while (target := (random.randint(1, self.board_opponent.size[0]), random.randint(1, self.board_opponent.size[1]))) in self.list_shots or target == None:
                     pass
         else:
             self.target_id += 1
@@ -521,7 +521,8 @@ class InputCoords:
         self.data = list()
         self.list_coordinates = list()
         self.board_obj = Board()
-        self.highlight_range = (self.capacity[len(self.data)]-1, 0)
+        self.highlight_range = (self.capacity[len(self.data)] - 1, 0)
+        self.boatnbr = get_cfg("boatnbr")
 
         self.win.resizable(False, False)
         self.win.protocol("WM_DELETE_WINDOW", self.close)
@@ -557,7 +558,7 @@ class InputCoords:
     def wait_user(self):
         "wait for the user to select all of the boats"
         try:
-            while get_cfg("boatnbr") > len(self.data):
+            while self.boatnbr > len(self.data):
                 self.win.update()
                 self.win.update_idletasks()
         except:
@@ -602,7 +603,7 @@ class InputCoords:
         "check if a boat is valid before saving it"
         errors = []
 
-        size = get_cfg("size")
+        size = self.board_obj.size
         boat_obj = Boat(
             self.capacity[len(self.data)], (*self.selected_coords, self.rotation))
 
@@ -621,7 +622,7 @@ class InputCoords:
             self.board_obj.draw_boat(boat_obj)
             self.data.append(boat_obj)
             self.list_coordinates += boat_obj.list_coordinates
-            if len(self.data) < get_cfg("boatnbr"):
+            if len(self.data) < self.boatnbr:
                 self.set_win_title()
                 # refresh highlight_range
                 self.highlight_selection()
@@ -876,7 +877,6 @@ class Config:
             self.caps.append([lbl, cap])
 
     def change_preset(self, event=None):
-        # colors = get_cfg("colors")
         if self.selected_preset.get() == self.presets[0]:
             for i in range(len(self.colors)):
                 self.colors[i][1].delete(0, tk.END)
@@ -1219,11 +1219,8 @@ def init_game(net: bool, nbr_players: int):
                 i += 1
             del p.list_coordinates[-1]
 
-    if net and not(is_host):  # switch vars to match players' id on both computer
-        t = p1
-        p1 = p2
-        p2 = t
-        del t
+    if net and not(is_host):
+        p1, p2 = p2, p1  # switch vars to match players' id on both computer
 
     ########## game initiated ##########
 
@@ -1367,7 +1364,7 @@ def game(net: bool, nbr_players: int):
             targets = []
             for y in range(y_target-1, y_target+2):
                 for x in range(x_target-1, x_target+2):
-                    if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
+                    if (1 <= x <= p1.board_opponent.size[0]) and (1 <= y <= p1.board_opponent.size[1]):
                         targets += [(x, y)]
         elif target_type == get_str("ammo", ammo_type=get_str("ammo_type/sonar")):
             app.player.stats["ammo used"][get_str(
@@ -1377,7 +1374,7 @@ def game(net: bool, nbr_players: int):
             targets = []
             for y in range(y_target, y_target+get_cfg("probe_range")+1):
                 for x in range(x_target, x_target+get_cfg("probe_range")+1):
-                    if (1 <= x <= get_cfg("size")[0]) and (1 <= y <= get_cfg("size")[1]):
+                    if (1 <= x <= p1.board_opponent.size[0]) and (1 <= y <= p1.board_opponent.size[1]):
                         targets += [(x, y)]
             for boat in app.opponent.boats:
                 for target in targets:
